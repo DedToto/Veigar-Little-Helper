@@ -82,6 +82,7 @@ function OnLoad()
 	
 	VeigarConfig:addSubMenu("["..myHero.charName.." - OrbWalking]", "OrbWalking")
     NSOW:LoadToMenu(VeigarConfig.OrbWalking)
+	
 end
 
 function OnTick()
@@ -140,7 +141,7 @@ function createMenu()
 		VeigarConfig.farm:addParam("autoFarm", "Auto farm with Q", SCRIPT_PARAM_ONKEYTOGGLE, false, autoFarmKey)
 		VeigarConfig.farm:addParam("manasavep", "Mana % to conserve", SCRIPT_PARAM_SLICE, 1, 1, 100, 0)
 		VeigarConfig.farm:addParam("manasave", "Conserve mana during farm", SCRIPT_PARAM_ONOFF,false)
-	VeigarConfig:addParam("doDraw", "Draw E circle", SCRIPT_PARAM_ONOFF, true)
+		VeigarConfig.farm:addParam("SaveE", "Dont farm if Mana < EManaCost",  SCRIPT_PARAM_ONOFF, true)
 	VeigarConfig:addParam("AutoBuy", "Buy Starting Items", SCRIPT_PARAM_ONKEYDOWN, false, AutoBuy)
 	VeigarConfig:addParam("ShowMana", "Show Time For Mana Regen", SCRIPT_PARAM_ONOFF, true)
 	VeigarConfig:addParam("Death", "Show Info After Death", SCRIPT_PARAM_ONOFF, false)
@@ -290,21 +291,23 @@ function autoFarm()
 	local usedQ = false
 	if VeigarConfig.farm.autoFarm and GetTickCount() > lastFarmCheck + farmCheckTick then
 		if (VeigarConfig.farm.manasave and manaPct() > VeigarConfig.farm.manasavep) or not VeigarConfig.farm.manasave then
-			if CanUseSpell(_Q) then
-				for k = 1, objManager.maxObjects do
-					if not usedQ then
-						local minion = objManager:GetObject(k)
-						if minion ~= nil and minion.name:find("Minion_") and minion.team ~= myHero.team and minion.dead == false and GetDistance(minion) < qRange then
-							local qDamage = getDmg("Q",minion,myHero)
-							if qDamage >= minion.health then
-								CastSpell(_Q, minion)
-								usedQ = true
+			if myHero.mana > ComboManaCost({_Q, _E}) or not VeigarConfig.farm.SaveE then
+				if CanUseSpell(_Q) then
+					for k = 1, objManager.maxObjects do
+						if not usedQ then
+							local minion = objManager:GetObject(k)
+							if minion ~= nil and minion.name:find("Minion_") and minion.team ~= myHero.team and minion.dead == false and GetDistance(minion) < qRange then
+								local qDamage = getDmg("Q",minion,myHero)
+								if qDamage >= minion.health then
+									CastSpell(_Q, minion)
+									usedQ = true
+								end
 							end
 						end
 					end
 				end
+				lastFarmCheck = GetTickCount()
 			end
-			lastFarmCheck = GetTickCount()
 		end
 	end
 end
