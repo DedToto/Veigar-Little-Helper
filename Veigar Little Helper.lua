@@ -1,6 +1,6 @@
 if myHero.charName ~= "Veigar" then return end
 PrintChat(" >> omg a new version lolz")
-local version = 1.3
+local version = 1.4
 local AUTOUPDATE = true
 local SCRIPT_NAME = "Veigar Little Helper"
 
