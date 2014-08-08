@@ -20,8 +20,16 @@ if AUTOUPDATE then
 	SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/DedToto/Veigar-Little-Helper/master/Veigar Little Helper.lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/DedToto/Veigar-Little-Helper/master/"..SCRIPT_NAME..".version"):CheckUpdate()
 end
 
---Welcome to my Little Veigar Helper! I'd made it for those who only want calculations and misc to be done for them. Also this is my first script.
+local RequireI = Require("SourceLib")
+RequireI:Add("vPrediction", "https://raw.github.com/Hellsing/BoL/master/common/VPrediction.lua")
+RequireI:Add("SOW", "https://raw.github.com/Hellsing/BoL/master/common/SOW.lua")
+RequireI:Check()
 
+if RequireI.downloadNeeded == true then return end
+require 'VPrediction'
+require 'SOW'
+
+--Welcome to my Little Veigar Helper! I'd made it for those who only want calculations and misc to be done for them. Also this is my first script.
 
 --[GLOBALS]
 local DFG = GetInventorySlotItem(3128)
@@ -29,13 +37,14 @@ local ignite = nil
 local qRange = 650
 local lastFarmCheck = 0
 local farmCheckTick = 100
-local rofl = 0
+local int1 = 0
+local int2 = 0
 
 --[KEYS]
 local autoFarmKey = string.byte("J")
 local ExtraInfoKey = string.byte("Z")
 local AutoBuy = string.byte("P")
-local MainCalcKey = string.byte("X")
+local MainCalcKey = string.byte("A")
 
 --[SKILLS]
 local Q = 0
@@ -67,17 +76,27 @@ function OnLoad()
     elseif myHero:GetSpellData(SUMMONER_2).name:find("SummonerDot") then
         ignite = SUMMONER_2
     end
-
+	
+	VP = VPrediction(true)
+	NSOW = SOW(VP)
+	
+	VeigarConfig:addSubMenu("["..myHero.charName.." - OrbWalking]", "OrbWalking")
+    NSOW:LoadToMenu(VeigarConfig.OrbWalking)
 end
 
-
 function OnTick()
-
+	if GetInventorySlotItem(3128) ~= nil then
+		int2 = 1
+		else
+		int2 = 0
+	end
+	
 	ExtraExtraInfo()
 	
 	--[DFG AVAILABILITY CHECK]
-	if GetInventorySlotItem(3128) ~= nil then 
-		if myHero:CanUseSpell(DFG) == READY then
+	if int2 ~= 0 then 
+	local DFG = GetInventorySlotItem(3128)
+		if DFG ~= nil and myHero:CanUseSpell(DFG) == READY then
 			DFGI = 1
 		else
 			DFGI = 0
@@ -94,8 +113,8 @@ function OnTick()
 	if VeigarConfig.farm.autoFarm then autoFarm() end
 
 	--AutoBuy 
-	if VeigarConfig.AutoBuy and rofl ~= 1 then
-		--You can change these items but don't touch rofl.
+	if VeigarConfig.AutoBuy and int1 ~= 1 then
+		--You can change these items but don't touch int1.
 		BuyItem(1004)
 		BuyItem(2003)
 		BuyItem(2003)
@@ -105,7 +124,7 @@ function OnTick()
 		BuyItem(2004)
 		BuyItem(2004)
 		BuyItem(2004)
-		rofl = 1
+		int1 = 1
 	end
 	
 end
@@ -173,9 +192,10 @@ function DamageCalculator()
 				local Wdmg = getDmg("W", enemy, myHero)
 				local Rdmg = getDmg("R", enemy, myHero)
 				local AAdmg = (getDmg("AD", enemy, myHero))
-				local DFGdmg = (GetInventorySlotItem(3128) and getDmg("DFG", enemy ,myHero) or 0)
+				local DFGdmg = 0
 				local IGNITEdmg = 50 + 20 * myHero.level
 				local DMG = 0 + AAdmg
+				if DFGI ~= 0 then DFGdmg = getDmg("DFG", enemy ,myHero) end
 				
 				if DFGI ~= 0 then
 				local DFGDMG = 0
@@ -220,12 +240,14 @@ function ExtraInformation()
 					local Wdmg = getDmg("W", enemy, myHero)
 					local Rdmg = getDmg("R", enemy, myHero)
 					local AAdmg = (getDmg("AD", enemy, myHero))
+					local DFGdmg = 0
 					local IGNITEdmg = 50 + 20 * myHero.level
-					local DFGdmg = (GetInventorySlotItem(3128) and getDmg("DFG", enemy ,myHero) or 0)
 					local DMG = 0 + AAdmg
 					local Qdmgi = Qdmg * 1.2
 					local Wdmgi = Wdmg * 1.2
 					local Rdmgi = Rdmg * 1.2
+					
+					if DFGI ~= 0 then DFGdmg = getDmg("DFG", enemy ,myHero) end
 					IREADY = (ignite ~= nil and myHero:CanUseSpell(ignite) == READY)
 					
 				
@@ -338,12 +360,12 @@ function ComboManaCost(Combo)
 	return Result
 end
 
---[MISC FOR MANA REGEN]
+--[MANA REGEN]
 function DrawNoMana()
 	timetoregen = (ComboManaCost({_Q, _W, _E, _R}) - myHero.mana) / myHero.mpRegen
 	DrawText3D("No Mana ("..math.floor(timetoregen).."s) !!", myHero.x, myHero.y, myHero.z, 25, RGB(30, 83, 231), true)
 end
-
+--[MISC FOR MANASAVE]
 function manaPct()
   return math.round((myHero.mana / myHero.maxMana)*100)
 end
