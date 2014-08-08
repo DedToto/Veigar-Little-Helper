@@ -1,11 +1,23 @@
 if myHero.charName ~= "Veigar" then return end
 
-local version = 1.0
+local version = 1.1
 local AUTOUPDATE = true
 local SCRIPT_NAME = "Veigar Little Helper"
 
+local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
+local SOURCELIB_PATH = LIB_PATH.."SourceLib.lua"
+
+if FileExist(SOURCELIB_PATH) then
+	require("SourceLib")
+else
+	DOWNLOADING_SOURCELIB = true
+	DownloadFile(SOURCELIB_URL, SOURCELIB_PATH, function() PrintChat("Required libraries downloaded successfully, please reload") end)
+end
+
+if DOWNLOADING_SOURCELIB then PrintChat("Downloading required libraries, please wait...") return end
+
 if AUTOUPDATE then
-	SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/manzarek123/BoL/master/VeigarOS.lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/manzarek123/BoL/master/"..SCRIPT_NAME..".version"):CheckUpdate()
+	SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/DedToto/Veigar-Little-Helper/master/Veigar%20Little%20Helper.lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/DedToto/Veigar-Little-Helper/"..SCRIPT_NAME..".version"):CheckUpdate()
 end
 
 --Welcome to my Little Veigar Helper! I'd made it for those who only want calculations and misc to be done for them. Also this is my first script.
