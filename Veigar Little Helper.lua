@@ -58,7 +58,7 @@ local RMana = {125, 175, 225}
 local ComboMana = GetSpellData(_Q).mana + GetSpellData(_W).mana + GetSpellData(_E).mana + GetSpellData(_R).mana
 
 function OnLoad()
-
+	PrintChat("<font color=\"#eFF99CC\">You are using Veigar Little Helper ["..version.."] by DedToto.</font>")
 	createMenu()
 	player = GetMyHero()
 
