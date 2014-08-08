@@ -1,6 +1,6 @@
 if myHero.charName ~= "Veigar" then return end
-
-local version = 1.1
+--OMG MAN
+local version = 1.2
 local AUTOUPDATE = true
 local SCRIPT_NAME = "Veigar Little Helper"
 
@@ -17,7 +17,7 @@ end
 if DOWNLOADING_SOURCELIB then PrintChat("Downloading required libraries, please wait...") return end
 
 if AUTOUPDATE then
-	SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/DedToto/Veigar-Little-Helper/master/Veigar%20Little%20Helper.lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/DedToto/Veigar-Little-Helper/"..SCRIPT_NAME..".version"):CheckUpdate()
+	SourceUpdater(SCRIPT_NAME, version, "raw.github.com", "/DedToto/Veigar-Little-Helper/master/Veigar Little Helper.lua", SCRIPT_PATH .. GetCurrentEnv().FILE_NAME, "/DedToto/Veigar-Little-Helper/master/"..SCRIPT_NAME..".version"):CheckUpdate()
 end
 
 --Welcome to my Little Veigar Helper! I'd made it for those who only want calculations and misc to be done for them. Also this is my first script.
@@ -58,7 +58,7 @@ local RMana = {125, 175, 225}
 local ComboMana = GetSpellData(_Q).mana + GetSpellData(_W).mana + GetSpellData(_E).mana + GetSpellData(_R).mana
 
 function OnLoad()
-	PrintChat("<font color=\"#eFF99CC\">You are using Veigar Little Helper ["..version.."] by DedToto.</font>")
+	PrintChat("<font color=\"#ffffff\">You are using Veigar Little Helper ["..version.."] by DedToto.</font>")
 	createMenu()
 	player = GetMyHero()
 
