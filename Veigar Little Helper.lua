@@ -1,6 +1,6 @@
 if myHero.charName ~= "Veigar" then return end
---OMG MAN
-local version = 1.2
+PrintChat("omg new verison lolz)
+local version = 1.3
 local AUTOUPDATE = true
 local SCRIPT_NAME = "Veigar Little Helper"
 
@@ -347,5 +347,3 @@ end
 function manaPct()
   return math.round((myHero.mana / myHero.maxMana)*100)
 end
-
-PrintChat(" >> Little Veigar Helper by DedToto")
