@@ -1,6 +1,6 @@
 if myHero.charName ~= "Veigar" then return end
 
-local version = 1.1
+local version = 1.2
 local AUTOUPDATE = true
 local SCRIPT_NAME = "Veigar Little Helper"
 
@@ -52,6 +52,7 @@ local W = 0
 local R = 0
 local ignitos = 0
 local DFGI = 0
+local wRange = 900
 
 --[SKILL LVL]
 local Qlevel = 0
@@ -86,15 +87,16 @@ function OnLoad()
 end
 
 function OnTick()
+
+	ExtraExtraInfo()
+	
+	--[DFG AVAILABILITY CHECK]
 	if GetInventorySlotItem(3128) ~= nil then
 		int2 = 1
 		else
 		int2 = 0
 	end
 	
-	ExtraExtraInfo()
-	
-	--[DFG AVAILABILITY CHECK]
 	if int2 ~= 0 then 
 	local DFG = GetInventorySlotItem(3128)
 		if DFG ~= nil and myHero:CanUseSpell(DFG) == READY then
@@ -104,16 +106,33 @@ function OnTick()
 		end
 	end
 	
+	--[Auto W Stunned]
+	for i, enemy in ipairs(GetEnemyHeroes()) do
+		if ValidTarget(enemy) then
+			if VeigarConfig.autoW and player:CanUseSpell(_W) == READY and enemy.canMove ~= true and IsGoodTarget(enemy, wRange) then
+				CastSpell(_W, enemy)
+				return
+			end
+			
+			if VeigarConfig.harras.Qharras and IsGoodTarget(enemy, qRange) then
+				if (VeigarConfig.harras.manasaveQ and manaPct() > VeigarConfig.harras.manasaveQP) or not VeigarConfig.harras.manasaveQ then
+					CastSpell(_Q, enemy) -- cast spell
+					return
+				end
+			end
+		end
+	end
+
 	--[SKILL MANACOSTS]
 	Qlevel = myHero:GetSpellData(_Q).level
 	Wlevel = myHero:GetSpellData(_W).level
 	Elevel = myHero:GetSpellData(_E).level
 	Rlevel = myHero:GetSpellData(_R).level
 	
-	--AutoFarm
+	--[AutoFarm]
 	if VeigarConfig.farm.autoFarm then autoFarm() end
 
-	--AutoBuy 
+	--[AutoBuy]
 	if VeigarConfig.AutoBuy and int1 ~= 1 then
 		--You can change these items but don't touch int1.
 		BuyItem(1004)
@@ -137,16 +156,25 @@ function createMenu()
 		VeigarConfig.draw:addParam("Erange", "Draw E range", SCRIPT_PARAM_ONOFF, true)
 		VeigarConfig.draw:addParam("ErangeMax", "Draw E rangeMax", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.draw:addParam("Wrange", "Draw W range", SCRIPT_PARAM_ONOFF, false)
+		
 	VeigarConfig:addSubMenu("AutoFarm","farm")
 		VeigarConfig.farm:addParam("autoFarm", "Auto farm with Q", SCRIPT_PARAM_ONKEYTOGGLE, false, autoFarmKey)
 		VeigarConfig.farm:addParam("manasavep", "Mana % to conserve", SCRIPT_PARAM_SLICE, 1, 1, 100, 0)
 		VeigarConfig.farm:addParam("manasave", "Conserve mana during farm", SCRIPT_PARAM_ONOFF,false)
 		VeigarConfig.farm:addParam("SaveE", "Dont farm if Mana < EManaCost",  SCRIPT_PARAM_ONOFF, true)
+		
+	VeigarConfig:addSubMenu("Harras","harras")
+		VeigarConfig.harras:addParam("Qharras", "Harras enemy in range with Q", SCRIPT_PARAM_ONOFF, false)
+		VeigarConfig.harras:addParam("manasaveQP", "Mana % to conserve", SCRIPT_PARAM_SLICE, 1, 1, 100, 0)
+		VeigarConfig.harras:addParam("manasaveQ", "Conserve mana during harras", SCRIPT_PARAM_ONOFF,false)
+		
+	VeigarConfig:addParam("autoW", "Auto W Stunned Enemies", SCRIPT_PARAM_ONOFF, true)
 	VeigarConfig:addParam("AutoBuy", "Buy Starting Items", SCRIPT_PARAM_ONKEYDOWN, false, AutoBuy)
 	VeigarConfig:addParam("ShowMana", "Show Time For Mana Regen", SCRIPT_PARAM_ONOFF, true)
 	VeigarConfig:addParam("Death", "Show Info After Death", SCRIPT_PARAM_ONOFF, false)
 	VeigarConfig:addParam("ExtraInfo", "Show Best Killing Combo", SCRIPT_PARAM_ONKEYTOGGLE, true, ExtraInfoKey)
 	VeigarConfig:addParam("MainCalc", "Show Main Calculations", SCRIPT_PARAM_ONKEYTOGGLE, true, MainCalcKey)
+	
 	VeigarConfig.farm:permaShow("autoFarm")
 	VeigarConfig:permaShow("ExtraInfo")
 	
@@ -366,9 +394,15 @@ end
 --[MANA REGEN]
 function DrawNoMana()
 	timetoregen = (ComboManaCost({_Q, _W, _E, _R}) - myHero.mana) / myHero.mpRegen
-	DrawText3D("No Mana ("..math.floor(timetoregen).."s) !!", myHero.x, myHero.y, myHero.z, 25, RGB(30, 83, 231), true)
+	DrawText3D("No Mana ("..math.floor(timetoregen).."s) !!", myHero.x, myHero.y, myHero.z, 25, RGB(48, 213, 200), true)
 end
+
 --[MISC FOR MANASAVE]
 function manaPct()
   return math.round((myHero.mana / myHero.maxMana)*100)
+end
+--[MISC FOR AUTO W]
+function IsGoodTarget(target, range)
+	return player:GetDistance(target) < range and target.valid and target.dead == false
+	and target.bMagicImunebMagicImune ~= true and target.bInvulnerable ~= true and target.visible
 end
