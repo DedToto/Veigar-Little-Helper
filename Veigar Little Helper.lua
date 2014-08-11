@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 1.3
+local version = 1.4
 --[GLOBALS]
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -8,6 +8,7 @@ local lastFarmCheck = 0
 local farmCheckTick = 100
 local int1 = 0
 local int2 = 0
+local eTarget = nil
 
 --[KEYS]
 local autoFarmKey = string.byte("J")
@@ -33,6 +34,15 @@ local Wlevel = 0
 local Elevel = 0
 local Rlevel = 0
 
+--[Skill attributes]
+local qrange = 650
+local wcastspeed = 1.25 
+local wrange = 900
+local wradius = 230 
+local eradius = 330 
+local erange = 600
+local ecastspeed = 0.34 
+
 --[MANACOSTS]
 local QMana = {60, 65, 70, 75, 80}
 local WMana = {70, 80, 90, 100, 110}
@@ -46,12 +56,14 @@ local ComboMana = GetSpellData(_Q).mana + GetSpellData(_W).mana + GetSpellData(_
  local qCircleColor = ARGB(255,0,255,0)--0x19A712 --green by default
 
 function OnTick()
+	ts:update()
 	AutoBuyy()
 	autoFarm()
 	ManaCosts()
 	AutoWharrasQ()
 	ExtraExtraInfo()
 	DFGcheck()
+	EWandCage()
 end
 
 function OnDraw()
@@ -64,6 +76,7 @@ function OnDraw()
 end
 
 function OnLoad()
+	player = myHero
 	PrintChat("<font color=\"#ffffff\">You are using Veigar Little Helper ["..version.."] by DedToto.</font>")
 	player = GetMyHero()
 	UpdateCheck()
@@ -71,7 +84,6 @@ function OnLoad()
 	spaceHK = 32
 	
 	VeigarConfig = scriptConfig("Little Veigar Helper", "littlehelper")
-	
 	VeigarConfig:addSubMenu("Drawing","draw")
 		VeigarConfig.draw:addParam("Erange", "Draw E range", SCRIPT_PARAM_ONOFF, true)
 		VeigarConfig.draw:addParam("ErangeMax", "Draw E rangeMax", SCRIPT_PARAM_ONOFF, false)
@@ -98,13 +110,18 @@ function OnLoad()
 		VeigarConfig.other:addParam("ExtraInfo", "Show Best Killing Combo", SCRIPT_PARAM_ONKEYTOGGLE, true, ExtraInfoKey)
 		VeigarConfig.other:addParam("MainCalc", "Show Main Calculations", SCRIPT_PARAM_ONKEYTOGGLE, true, MainCalcKey)
 		
+	VeigarConfig:addParam("eCastActive", "Use E+W", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("E"))
+	VeigarConfig:addParam("cageTeamActive", "Cage Team", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
+	
 	VeigarConfig.other:permaShow("autoW")
 	VeigarConfig.farm:permaShow("autoFarm")
 	VeigarConfig.other:permaShow("ExtraInfo")
 	
 	VP = VPrediction(true)
 	NSOW = SOW(VP)
-	
+	ts = TargetSelector(TARGET_LOW_HP, erange + eradius, DAMAGE_MAGIC)
+	ts.name = "Veigar"
+	VeigarConfig:addTS(ts)
 	VeigarConfig:addSubMenu("["..myHero.charName.." - OrbWalking]", "OrbWalking")
 		NSOW:LoadToMenu(VeigarConfig.OrbWalking)
 	
@@ -253,6 +270,40 @@ function AutoWharrasQ()
 	end
 end
 
+function EWandCage()
+local players = heroManager.iCount
+  if VeigarConfig.eCastActive == true and not player.dead then
+    if eTarget then
+      if not targetvalid(eTarget) then
+        eTarget = nil
+      end
+    end
+    if eTarget == nil then
+      if ts.target then
+        eTarget = ts.target
+      else
+        for i = 1, heroManager.iCount, 1 do
+          local testTarget = heroManager:getHero(i)
+          if targetvalid(testTarget) then
+            eTarget = testTarget
+          end
+        end
+      end
+    end
+
+    if eTarget then
+      useStunCombo(eTarget)
+    end
+  end
+
+  if VeigarConfig.cageTeamActive == true and ts.target ~= nil and not player.dead then
+    local spellPos = FindGroupCenterFromNearestEnemies(eradius, erange)
+    if spellPos ~= nil then
+      UseSpell(_E, spellPos.center.x, spellPos.center.z)
+    end
+  end  
+end
+
 function Drawing()
 	if VeigarConfig.draw.Erange then
 		CustomDrawCircle(player.x, player.y, player.z, qRange, qCircleColor)
@@ -265,6 +316,165 @@ function Drawing()
 	if VeigarConfig.draw.Wrange then
 		CustomDrawCircle(player.x, player.y, player.z, wRange, wCircleColor)
 	end
+end
+
+function useStunCombo(object)
+  local spellPos, hitchance
+  if player:CanUseSpell(_E) == READY and not object.dead then
+    castESpellOnTarget(object)
+  end
+  
+    if player:CanUseSpell(_W) == READY and not object.dead then
+    if object and targetvalid(object) then
+      spellPos, hitchance = VP:GetCircularCastPosition(object, wcastspeed, wradius, wrange)
+      if spellPos and (hitchance >= 3) then
+        UseSpell(_W, spellPos.x, spellPos.z)
+        else
+         UseSpell(_W, object)
+      end
+    end
+  end
+end
+
+function targetvalid(target)
+  return target ~= nil and target.team ~= player.team and target.visible and not target.dead and GetDistanceTo(player, target) <= (erange + eradius)
+end
+
+function GetDistanceTo(target1, target2)
+  local dis
+  if target2 ~= nil and target1 ~= nil then
+    dis = math.sqrt((target2.x - target1.x) ^ 2 + (target2.z - target1.z) ^ 2)
+  end
+  return dis
+end
+
+function castESpellOnTarget(object)
+
+  if player:CanUseSpell(_E) then
+
+    local target1 = object
+    local CircX, CircZ, returnTarget
+    local players = heroManager.iCount
+    for j = 1, players, 1 do
+
+      local target2 = heroManager:getHero(j)
+      if targetvalid(target1) and targetvalid(target2) and target1.name ~= target2.name then --make sure both targets are valid enemies and in spell range
+        if targetsinradius(target1, target2) and CircX == nil and CircZ == nil then --true if a double stun is possible
+
+          CircX, CircZ = calcdoublestun(target1, target2) --calculates coords for stun
+          if CircX and CircZ then
+            break
+          end
+      end
+      end
+    end
+
+    if CircX == nil or CircZ == nil then --true if double stun coords were not found
+      if targetvalid(object) then
+        CircX, CircZ = calcsinglestun() --calculate stun coords for a single target
+    end
+    end
+    if CircX and CircZ then --true if any coords were found
+      UseSpell(_E, CircX, CircZ)
+    end
+  end
+end
+
+function targetsinradius(target1, target2)
+  local dis, dis1, dis2, predicted1, predicted2, hitchance1, hitchance2
+
+  predicted1, hitchance1 = VP:GetPredictedPos(target1, ecastspeed)
+  predicted2, hitchance2  = VP:GetPredictedPos(target2, ecastspeed)
+
+  if predicted1 and predicted2 then
+    dis = math.sqrt((predicted2.x - predicted1.x) ^ 2 + (predicted2.z - predicted1.z) ^ 2) --find the distance between the two targets
+
+    dis1 = math.sqrt((predicted1.x - player.x) ^ 2 + (predicted1.z - player.z) ^ 2) --distance from player to predicted target 1
+    dis2 = math.sqrt((predicted2.x - player.x) ^ 2 + (predicted2.z - player.z) ^ 2) --distance from player to predicted target 2
+  end
+
+  return dis ~= nil and dis <= (eradius * 2) and dis1 <= (eradius + erange) and dis2 <= (eradius + erange)
+end
+
+
+function calcsinglestun()
+  if (ts.target ~= nil) and player:CanUseSpell(SPELL_3) == READY then
+    local predicted, hitchance1
+
+    predicted, hitchance1 = VP:GetPredictedPos(ts.target, ecastspeed)
+
+
+    if predicted and (hitchance1 >=2) then
+      local CircX, CircZ
+      local dis = math.sqrt((player.x - predicted.x) ^ 2 + (player.z - predicted.z) ^ 2)
+      CircX = predicted.x + eradius * ((player.x - predicted.x) / dis)
+      CircZ = predicted.z + eradius * ((player.z - predicted.z) / dis)
+      return CircX, CircZ
+    end
+  end
+end
+
+function calcdoublestun(target1, target2)
+
+  local CircX, CircZ, predicted1, predicted2, hitchance1, hitchance2
+
+  predicted1, hitchance1 = VP:GetPredictedPos(target1, ecastspeed)
+  predicted2, hitchance2  = VP:GetPredictedPos(target2, ecastspeed)
+
+  if predicted1 and predicted2 and (hitchance1 >=2) and (hitchance2 >=2) then
+
+    local h1 = predicted1.x
+    local k1 = predicted1.z
+    local h2 = predicted2.x
+    local k2 = predicted2.z
+
+    local u = (h1) ^ 2 + (h2) ^ 2 - 2 * (h1) * (h2) - (k1) ^ 2 + (k2) ^ 2
+    local w = k1 - k2
+    local v = h2 - h1
+
+    local a = 4 * (w ^ 2 + v ^ 2)
+    local b = 4 * (u * w - 2 * ((v) ^ 2) * (k1))
+    local c = (u) ^ 2 - 4 * ((v ^ 2)) * (eradius ^ 2 - k1 ^ 2)
+
+    local Z1 = ((-b) + math.sqrt((b) ^ 2 - 4 * a * c)) / (2 * a) --Z coord for first solution
+    local Z2 = ((-b) - math.sqrt((b) ^ 2 - 4 * a * c)) / (2 * a) --Z coord for second solution
+
+    local d = (Z1 - k1) ^ 2 - (eradius) ^ 2
+    local e = (Z1 - k2) ^ 2 - (eradius) ^ 2
+
+    local X1 = ((h2) ^ 2 - (h1) ^ 2 - d + e) / (2 * v) -- X Coord for first solution
+
+    local p = (Z2 - k1) ^ 2 - (eradius) ^ 2
+    local q = (Z2 - k2) ^ 2 - (eradius) ^ 2
+
+    local X2 = ((h2) ^ 2 - (h1) ^ 2 - p + q) / (2 * v) --X Coord for second solution
+
+
+    --determine if these 2 points are within range, and which is closest
+
+    local dis1 = math.sqrt((X1 - player.x) ^ 2 + (Z1 - player.z) ^ 2)
+    local dis2 = math.sqrt((X2 - player.x) ^ 2 + (Z2 - player.z) ^ 2)
+
+    if dis1 <= (eradius + erange) and dis1 <= dis2 then
+      CircX = X1
+      CircZ = Z1
+    end
+    if dis2 <= (eradius + erange) and dis2 < dis1 then
+      CircX = X2
+      CircZ = Z2
+    end
+  end
+  return CircX, CircZ
+end
+
+function UseSpell(Spell,param1,param2)
+    if param1 and param2 then
+      CastSpell(Spell,param1,param2)
+    elseif param1 then
+      CastSpell(Spell,param1)
+    else
+      CastSpell(Spell)
+    end
 end
 
 function AutoBuyy()
@@ -446,4 +656,20 @@ function ManaCost(Spell)
 		return RMana[Rlevel]
 	end
 	return 0
+end
+
+class'Circle'
+function Circle:__init(center, radius)
+  assert((VectorType(center) or center == nil) and (type(radius) == "number" or radius == nil), "Circle: wrong argument types (expected <Vector> or nil, <number> or nil)")
+  self.center = Vector(center) or Vector()
+  self.radius = radius or 0
+end
+
+function Circle:Contains(v)
+  assert(VectorType(v), "Contains: wrong argument types (expected <Vector>)")
+  return math.close(self.center:dist(v), self.radius)
+end
+
+function Circle:__tostring()
+  return "{center: " .. tostring(self.center) .. ", radius: " .. tostring(self.radius) .. "}"
 end
