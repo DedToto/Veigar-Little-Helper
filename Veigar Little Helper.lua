@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 1.4
+local version = 1.3
 --[GLOBALS]
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -544,7 +544,7 @@ function ManaRegenSec()
 end
 
 function UpdateCheck()
-local AUTOUPDATE = true
+local AUTOUPDATE = false
 local SCRIPT_NAME = "Veigar Little Helper"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
 local SOURCELIB_PATH = LIB_PATH.."SourceLib.lua"
@@ -873,11 +873,11 @@ Biscuit = GetInventorySlotItem(2010)
 				CastSpell(hppot)
 			end
 			
-			if flaskk ~= nil
+			if flaskk ~= nil then
 				CastSpell(flaskk)
 			end
 			
-			if elixir ~= nil
+			if elixir ~= nil then
 				CastSpell(elixir)
 			end
 		end
