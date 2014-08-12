@@ -122,7 +122,8 @@ function OnLoad()
 		VeigarConfig.AP:addParam("mp", "Use potions when Mana < %", SCRIPT_PARAM_SLICE, 0, 1, 100, 0)
 		VeigarConfig.AP:addParam("flask", "Use flask as HP potion settings", SCRIPT_PARAM_ONOFF, true)
 		VeigarConfig.AP:addParam("elixir", "Auto Elixir of Fortitude when  < %", SCRIPT_PARAM_SLICE, 0, 1, 100, 0)		
-
+		VeigarConfig.AP:addParam("antign", "Auto Pots when ignited/morde R", SCRIPT_PARAM_ONOFF, true)
+		
 	VeigarConfig:addSubMenu("Other","other")
 		VeigarConfig.other:addParam("autoW", "Auto W Stunned Enemies", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("AutoBuy", "Buy Starting Items", SCRIPT_PARAM_ONKEYDOWN, false, AutoBuy)
@@ -868,7 +869,7 @@ mppot = GetInventorySlotItem(2004)
 elixir = GetInventorySlotItem(2037)
 flaskk = GetInventorySlotItem(2041)
 Biscuit = GetInventorySlotItem(2010)
-		if  TargetHaveBuff("SummonerDot", myHero) or TargetHaveBuff("MordekaiserChildrenOfTheGrave", myHero) and not InFountain() then
+		if  TargetHaveBuff("SummonerDot", myHero) or TargetHaveBuff("MordekaiserChildrenOfTheGrave", myHero) and not InFountain() and VeigarConfig.AP.antign then
 			if hppot ~= nil then
 				CastSpell(hppot)
 			end
