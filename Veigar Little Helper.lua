@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 1.3
+local version = 1.4
 --[GLOBALS]
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -544,7 +544,7 @@ function ManaRegenSec()
 end
 
 function UpdateCheck()
-local AUTOUPDATE = false
+local AUTOUPDATE = true
 local SCRIPT_NAME = "Veigar Little Helper"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
 local SOURCELIB_PATH = LIB_PATH.."SourceLib.lua"
