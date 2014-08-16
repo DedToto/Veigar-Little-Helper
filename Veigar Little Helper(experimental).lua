@@ -929,33 +929,33 @@ function performSmartCombo()
 	end
 	if combo == 1 then
 		performCombo1()
-	elseif combo == 2
+	elseif combo == 2 then
 		performCombo2()
-	elseif combo == 3
+	elseif combo == 3 then
 		performCombo3()
-	elseif combo == 4
+	elseif combo == 4 then
 		performCombo4()
-	elseif combo == 5
+	elseif combo == 5 then
 		performCombo5()
-	elseif combo == 6
+	elseif combo == 6 then
 		performCombo6()
-	elseif combo == 7
+	elseif combo == 7 then
 		performCombo7()
-	elseif combo == 8
+	elseif combo == 8 then
 		performCombo8()
-	elseif combo == 9
+	elseif combo == 9 then
 		performCombo9()
-	elseif combo == 10
+	elseif combo == 10 then
 		performCombo10()
-	elseif combo == 11
+	elseif combo == 11 then
 		performCombo11()
-	elseif combo == 12
+	elseif combo == 12 then
 		performCombo12()
-	elseif combo == 13
+	elseif combo == 13 then
 		performCombo13()
-	elseif combo == 14
+	elseif combo == 14 then
 		performCombo14()
-	elseif combo == 15
+	elseif combo == 15 then
 		performCombo15()		
 	end
 end
