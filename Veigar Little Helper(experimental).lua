@@ -269,24 +269,26 @@ end
 function autoFarm()
 
 	local usedQ = false
-	if VeigarConfig.farm.autoFarm and GetTickCount() > lastFarmCheck + farmCheckTick and not VeigarConfig.spacebaractive then
-		if (VeigarConfig.farm.manasave and manaPct() > VeigarConfig.farm.manasavep) or not VeigarConfig.farm.manasave then
-			if myHero.mana > ComboManaCost({_Q, _E}) or not VeigarConfig.farm.SaveE then
-				if CanUseSpell(_Q) then
-					for k = 1, objManager.maxObjects do
-						if not usedQ then
-							local minion = objManager:GetObject(k)
-							if minion ~= nil and minion.name:find("Minion_") and minion.team ~= myHero.team and minion.dead == false and GetDistance(minion) < qRange then
-								local qDamage = getDmg("Q",minion,myHero)
-								if qDamage >= minion.health then
-									CastSpell(_Q, minion)
-									usedQ = true
+	if VeigarConfig.farm.autoFarm and GetTickCount() > lastFarmCheck + farmCheckTick then
+		if not VeigarConfig.spacebarActive then
+			if (VeigarConfig.farm.manasave and manaPct() > VeigarConfig.farm.manasavep) or not VeigarConfig.farm.manasave then
+				if myHero.mana > ComboManaCost({_Q, _E}) or not VeigarConfig.farm.SaveE then
+					if CanUseSpell(_Q) then
+						for k = 1, objManager.maxObjects do
+							if not usedQ then
+								local minion = objManager:GetObject(k)
+								if minion ~= nil and minion.name:find("Minion_") and minion.team ~= myHero.team and minion.dead == false and GetDistance(minion) < qRange then
+									local qDamage = getDmg("Q",minion,myHero)
+									if qDamage >= minion.health then
+										CastSpell(_Q, minion)
+										usedQ = true
+									end
 								end
 							end
 						end
 					end
+					lastFarmCheck = GetTickCount()
 				end
-				lastFarmCheck = GetTickCount()
 			end
 		end
 	end
@@ -1023,7 +1025,7 @@ function dmgCalc(drawtarget)
 					elseif (drawtarget.health <= (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then												--DFG Q+W+R+IGN
 					aCombo[drawtarget.name] = 14
 					return 14
-					elseif (enemy.health > (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then												--unkillable
+					elseif (drawtarget.health > (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then												--unkillable
 					aCombo[drawtarget.name] = 15
 					return 15
 				end
