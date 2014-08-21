@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 1.6
+local version = 1.61
 --[GLOBALS]
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -62,6 +62,14 @@ local elixir = 0
 local flaskk = 0
 local Biscuit = 0
 
+local hppot = GetInventorySlotItem(2003)
+local mppot = GetInventorySlotItem(2004)
+local elixir = GetInventorySlotItem(2037)
+local flaskk = GetInventorySlotItem(2041)
+local Biscuit = GetInventorySlotItem(2010)
+local zhonya = GetInventorySlotItem(3157)
+local wooglet = GetInventorySlotItem(3090)
+
 --[AUTOLEVEL]
 local abilitySequence
 local qOff, wOff, eOff, rOff = 0,0,0,0
@@ -79,18 +87,15 @@ local cageRange = cageSpellRange + (cageItselfRange/2) - cageDiff -- spell range
 
 --[MAIN PART]
 function OnTick()
-	ts:update()
+	Checks()
 	AutoBuyy()
 	autoFarm()
 	ManaCosts()
 	AutoWharrasQ()
-	ExtraExtraInfo()
-	DFGcheck()
 	EWandCage()
 	Potions()
 	AutoLevel()
 	LifeSaver()
-	CheckToggleMode()
 	if VeigarConfig.combo.spacebarActive and ValidTarget(ts.target) then
 		performSmartCombo()
 	end
@@ -121,6 +126,8 @@ function OnLoad()
 			VeigarConfig.combo.autokillf:addParam("autokill", "Auto ULT/Q killable", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("usedfg", "Use DFG in Auto ULT/Q killable", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("onlyq", "Only LastHit enemies with Q", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.combo.autokillf:addParam("saveab", "Don't waste spells if OverDmg is > than", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.combo.autokillf:addParam("saveabsl", "OverDamage config ", SCRIPT_PARAM_SLICE, 1, 1, 1000, 0)
 			--VeigarConfig.combo:addParam("trytosave", "Try to save R if Q soon", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.combo:addParam("spacebarActive", "SpaceToWin", SCRIPT_PARAM_ONKEYDOWN, false, spaceHK)
 		VeigarConfig.combo:addParam("cageTeamActive", "Cage Team", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
@@ -158,6 +165,8 @@ function OnLoad()
 		VeigarConfig.LifeSaver:addParam("LifeSaver", "Stun enemies Who come too close", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver:addParam("LifeSaverRange","Range of LifeSaver", SCRIPT_PARAM_SLICE, 1, 1, 800, 0)
 		VeigarConfig.LifeSaver:addParam("usew", "Use W on emeies caught in LifeSaver", SCRIPT_PARAM_ONOFF, false)
+		VeigarConfig.LifeSaver:addParam("zwsave", "Auto activate Zhonyas/Wooglets", SCRIPT_PARAM_ONOFF, false)
+		VeigarConfig.LifeSaver:addParam("zwhealth", "Min Health % for Zhonyas/Wooglets", SCRIPT_PARAM_SLICE, 15, 0, 100, -1)
 		VeigarConfig.LifeSaver:addParam("antign", "Auto Pots when ignited/morde R", SCRIPT_PARAM_ONOFF, true)
 		
 	VeigarConfig:addSubMenu("Other","other")
@@ -185,11 +194,6 @@ function OnLoad()
 	
 end
 --[END OF THE MAIN PART]
-
-function CheckToggleMode()
-		if VeigarConfig.farm.farmm == 1 then SetMode = SCRIPT_PARAM_ONKEYTOGGLE else SetMode = SCRIPT_PARAM_ONKEYDOWN end
-		VeigarConfig.farm._param[1].pType = SetMode
-end
 
 function DamageCalculator()
 	
@@ -254,27 +258,47 @@ function ExtraInformation()
 					
 				if DFGI ~= 0 then DFGdmg = getDmg("DFG", enemy ,myHero) end
 				
-				if VeigarConfig.combo.autokillf.autokill then
-					if (enemy.health < Qdmg and Q ~= 0 ) then
+				if VeigarConfig.combo.autokillf.autokill and not VeigarConfig.combo.spacebaractive then
+					if (enemy.health < Qdmg and Q ~= 0 and GetDistance(enemy) < qrange ) then
 						UseSpell(_Q, enemy)
-						elseif (enemy.health < Rdmg and R ~= 0 and not VeigarConfig.combo.autokillf.onlyq) then
+						elseif (enemy.health < Rdmg and R ~= 0 and not VeigarConfig.combo.autokillf.onlyq and GetDistance(enemy) < qrange) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - Rdmg) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
 						UseSpell(_R, enemy)
-						elseif (enemy.health < (Qdmg + Rdmg) and Q ~= 0 and R ~= 0 and not VeigarConfig.combo.autokillf.onlyq) then
+						end
+						elseif (enemy.health < (Qdmg + Rdmg) and Q ~= 0 and R ~= 0 and not VeigarConfig.combo.autokillf.onlyq and GetDistance(enemy) < qrange) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - (Rdmg + Qdmg)) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
+						UseSpell(_R, enemy)
 						UseSpell(_Q, enemy)
-						UseSpell(_R, enemy)
+						end
 						elseif (enemy.health < (Qdmgi + DFGdmg) and Q ~= 0 and DFGI ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < qrange ) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - (DFGdmg + Qdmgi)) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
 						DFG = GetInventorySlotItem(3128)
 						CastSpell(DFG, enemy)
 						UseSpell(_Q, enemy)
+						end
 						elseif (enemy.health < (Rdmgi + DFGdmg) and R ~= 0 and DFGI ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < qrange and not VeigarConfig.combo.autokillf.onlyq ) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - (DFGdmg + Rdmgi)) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
 						DFG = GetInventorySlotItem(3128)
 						CastSpell(DFG, enemy)
 						UseSpell(_R, enemy)
+						end
 						elseif (enemy.health < (Qdmgi + Rdmgi + DFGdmg) and Q ~= 0 and R ~= 0 and DFGI ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < qrange and not VeigarConfig.combo.autokillf.onlyq) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - (DFGdmg + Qdmgi + Rdmgi)) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
 						DFG = GetInventorySlotItem(3128)
 						CastSpell(DFG, enemy)
-						UseSpell(_Q, enemy)
 						UseSpell(_R, enemy)
+						UseSpell(_Q, enemy)
+						end
 					end
 				end
 				
@@ -645,23 +669,6 @@ function IgniteCheck()
     end
 end
 
-function DFGcheck()
-	if GetInventorySlotItem(3128) ~= nil then
-		int2 = 1
-		else
-		int2 = 0
-	end
-	
-	if int2 ~= 0 then 
-	local DFG = GetInventorySlotItem(3128)
-		if DFG ~= nil and myHero:CanUseSpell(DFG) == READY then
-			DFGI = 1
-		else
-			DFGI = 0
-		end
-	end
-end
-
 function ManaCosts()
 	Qlevel = myHero:GetSpellData(_Q).level
 	Wlevel = myHero:GetSpellData(_W).level
@@ -701,38 +708,6 @@ function CustomDrawCircle(x, y, z, radius, color)
   if OnScreen({ x = sPos.x, y = sPos.y }, { x = sPos.x, y = sPos.y })  then
     DrawCircleNextLvl(x, y, z, radius, 1, color, 75)
   end
-end
-
-function ExtraExtraInfo()
-	if CanUseSpell(_Q) == READY then
-	Q = 1
-	else
-	Q = 0
-	end
-	
-	if CanUseSpell(_W) == READY then
-	W = 1
-	else
-	W = 0
-	end
-	
-	if CanUseSpell(_R) == READY then
-	R = 1
-	else
-	R = 0
-	end
-	
-	if ignite ~= nil and myHero:CanUseSpell(ignite) == READY then
-	ignitos = 1
-	else
-	ignitos = 0
-	end
-	
-	if CanUseSpell(_E) == READY then
-	E = 1
-	else
-	E = 0
-	end
 end
 
 function ComboManaCost(Combo)
@@ -786,11 +761,11 @@ function Circle:__tostring()
 end
 
 function Potions()
-hppot = GetInventorySlotItem(2003)
-mppot = GetInventorySlotItem(2004)
-elixir = GetInventorySlotItem(2037)
-flaskk = GetInventorySlotItem(2041)
-Biscuit = GetInventorySlotItem(2010)
+		if VeigarConfig.LifeSaver.zwitems and myHero.health < (myHero.maxHealth * (VeigarConfig.LifeSaver.zwhealth / 100))
+			and (znaReady or wgtReady) then
+				CastSpell((zhonya or wooglet)) 
+		end
+
 		if  TargetHaveBuff("SummonerDot", myHero) or TargetHaveBuff("MordekaiserChildrenOfTheGrave", myHero) and not InFountain() and VeigarConfig.LifeSaver.antign then
 			if hppot ~= nil then
 				CastSpell(hppot)
@@ -910,19 +885,19 @@ function dmgCalc(drawtarget)
 						elseif (drawtarget.health <= (Qdmg + Wdmg + AAdmg) and Q ~= 0 and W ~= 0 and E ~= 0) then 																											--Q+W
 						aCombo[drawtarget.name] = 3
 						return 3
-						--elseif (drawtarget.health <= (Qdmgi + Wdmgi + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0 and E ~= 0) then 																					--DFG Q+W
+						--elseif (drawtarget.health <= (Qdmgi + Wdmgi + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0 and E ~= 0) then 																				--DFG Q+W
 						--aCombo[drawtarget.name] = 4
 						--return 4
 						elseif (drawtarget.health <= (Qdmg + Wdmg + IGNITEdmg + AAdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and E ~= 0) then																				--Q+W+IGN
 						aCombo[drawtarget.name] = 5
 						return 5
-						--elseif (drawtarget.health <= (Qdmgi + Wdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0 and E ~= 0) then														--DFG Q+W+IGN
+						--elseif (drawtarget.health <= (Qdmgi + Wdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0 and E ~= 0) then													--DFG Q+W+IGN
 						--aCombo[drawtarget.name] = 6
 						--return 6
 						elseif (drawtarget.health <= (Qdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 ) then																														--Q+R
 						aCombo[drawtarget.name] = 7
 						return 7
-						--elseif (drawtarget.health <= (Qdmgi + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																								--DFG Q+R
+						--elseif (drawtarget.health <= (Qdmgi + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																							--DFG Q+R
 						--aCombo[drawtarget.name] = 8
 						--return 8
 						elseif (drawtarget.health <= (Qdmg + IGNITEdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 and ignitos ~= 0 ) then																						--Q+R+IGN
@@ -1304,5 +1279,60 @@ end
 
 function OtherTeam(target)
 	return target.team ~= player.team
+end
+
+function Checks()
+	ts:update()
+	--DFG CHECK--
+		if GetInventorySlotItem(3128) ~= nil then
+		int2 = 1
+		else
+		int2 = 0
+	end
+	
+	if int2 ~= 0 then 
+	local DFG = GetInventorySlotItem(3128)
+		if DFG ~= nil and myHero:CanUseSpell(DFG) == READY then
+			DFGI = 1
+		else
+			DFGI = 0
+		end
+	end
+	--Q,W,E,R,IGNITE CHECK--
+		if CanUseSpell(_Q) == READY then
+	Q = 1
+	else
+	Q = 0
+	end
+	
+	if CanUseSpell(_W) == READY then
+	W = 1
+	else
+	W = 0
+	end
+	
+	if CanUseSpell(_R) == READY then
+	R = 1
+	else
+	R = 0
+	end
+	
+	if ignite ~= nil and myHero:CanUseSpell(ignite) == READY then
+	ignitos = 1
+	else
+	ignitos = 0
+	end
+	
+	if CanUseSpell(_E) == READY then
+	E = 1
+	else
+	E = 0
+	end
+	--Farm way check--
+	if VeigarConfig.farm.farmm == 1 then SetMode = SCRIPT_PARAM_ONKEYTOGGLE else SetMode = SCRIPT_PARAM_ONKEYDOWN end
+	VeigarConfig.farm._param[1].pType = SetMode
+	--Zhonya&Wooglet check--
+	znaReady = (zhonya ~= nil and myHero:CanUseSpell(zhonya) == READY)
+	wgtReady = (wooglet ~= nil and myHero:CanUseSpell(wooglet) == READY)
 end
 
