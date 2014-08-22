@@ -1,6 +1,6 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 1.61
---[GLOBALS]
+local version = 1.7
+--[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
 local qRange = 650
@@ -14,14 +14,14 @@ local CT = 1000
 local Comboing = false
 local ComboTick = 0
 
---[KEYS]
+--[KEYS]--
 local autoFarmKey = string.byte("J")
 local ExtraInfoKey = string.byte("Z")
 local AutoBuy = string.byte("P")
 local MainCalcKey = string.byte("A")
 local AutoWKey = string.byte("G")
 
---[SKILL INFO]
+--[SKILL INFO]--
 local Q = 0
 local W = 0
 local E = 0
@@ -33,13 +33,13 @@ local eradius = 330
 local erange = 600
 local wRange = 900
 
---[SKILL LVLS]
+--[SKILL LVLS]--
 local Qlevel = 0
 local Wlevel = 0
 local Elevel = 0
 local Rlevel = 0
 
---[Skill attributes]
+--[Skill attributes]--
 local qrange = 650
 local wcastspeed = 1.25 
 local wrange = 900
@@ -47,15 +47,16 @@ local wradius = 230
 local eradius = 330 
 local erange = 600
 local ecastspeed = 0.34 
+local aarange = 525
 
---[MANACOSTS]
+--[MANACOSTS]--
 local QMana = {60, 65, 70, 75, 80}
 local WMana = {70, 80, 90, 100, 110}
 local EMana = { 80, 90, 100, 110, 120}
 local RMana = {125, 175, 225}
 local ComboMana = GetSpellData(_Q).mana + GetSpellData(_W).mana + GetSpellData(_E).mana + GetSpellData(_R).mana
 
---[AUTO POTIONS]
+--[AUTO POTIONS]--
 local hppot = 0
 local mppot = 0
 local elixir = 0
@@ -70,21 +71,48 @@ local Biscuit = GetInventorySlotItem(2010)
 local zhonya = GetInventorySlotItem(3157)
 local wooglet = GetInventorySlotItem(3090)
 
---[AUTOLEVEL]
+--[AUTOLEVEL]--
 local abilitySequence
 local qOff, wOff, eOff, rOff = 0,0,0,0
 
---[LAG FREE INFO]
+--[LAG FREE INFO]--
  local eCircleColor = ARGB(255,255,0,255)--0xB820C3 -- purple by default
  local wCircleColor = ARGB(255,255,0,0)--0xEA3737 -- orange by default
  local qCircleColor = ARGB(255,0,255,0)--0x19A712 --green by default
-
- --[V2 STUN]
+ 
+ --[V2 STUN]--
 local cageSpellRange = 650
 local cageItselfRange = 375
 local cageDiff = 50
 local cageRange = cageSpellRange + (cageItselfRange/2) - cageDiff -- spell range + range of cage
 
+--[Interuptions]--
+    local LastCastedSpell = {}
+    local spells =
+    {
+        {name = "CaitlynAceintheHole", menuname = "Caitlyn (R)"},
+        {name = "AhriTumble", menuname = "Ahri (R)"},
+        {name = "DariusExecute", menuname = "Darius (R)"},
+        {name = "Crowstorm", menuname = "Fiddlesticks (R)"},
+        {name = "DrainChannel", menuname = "Fiddlesticks (W)"},
+        {name = "GalioIdolOfDurand", menuname = "Galio (R)"},
+        {name = "KatarinaR", menuname = "Katarina (R)"},
+        {name = "InfiniteDuress", menuname = "WarWick (R)"},
+        {name = "AbsoluteZero", menuname = "Nunu (R)"},
+        {name = "MissFortuneBulletTime", menuname = "Miss Fortune (R)"},
+        {name = "FallenOne", menuname = "Karthus (R)"},
+        {name = "LucianR", menuname = "Lucian (R)"},
+        {name = "SoulShackles", menuname = "Morgana (R)"},
+        {name = "UndyingRage", menuname = "Tryndamere (R)"},
+        {name = "GrandSkyfall", menuname = "Pantheon (R)"},
+        {name = "AlZaharNetherGrasp", menuname = "Malzahar (R)"},    
+        {name = "VolibearQ", menuname = "Volibear (Q)"},
+        {name = "InfiniteDuress", menuname = "Warwick (R)"},
+        {name = "MonkeyKingSpinToWin", menuname = "Wukong (R)"},
+        {name = "XerathLocusOfPower2", menuname = "Xerath (R)"},
+        {name = "ZacR", menuname = "Zac (R)"},
+    }
+	
 --[MAIN PART]
 function OnTick()
 	Checks()
@@ -96,8 +124,13 @@ function OnTick()
 	Potions()
 	AutoLevel()
 	LifeSaver()
+	interrupt()
 	if VeigarConfig.combo.spacebarActive and ValidTarget(ts.target) then
 		performSmartCombo()
+	end
+	
+	if VeigarConfig.combo.wasteall and ValidTarget(ts.target) then
+		performWasteCombo()
 	end
 end
 
@@ -128,25 +161,29 @@ function OnLoad()
 			VeigarConfig.combo.autokillf:addParam("onlyq", "Only LastHit enemies with Q", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveab", "Don't waste spells if OverDmg is > than", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveabsl", "OverDamage config ", SCRIPT_PARAM_SLICE, 1, 1, 1000, 0)
-			--VeigarConfig.combo:addParam("trytosave", "Try to save R if Q soon", SCRIPT_PARAM_ONOFF, false)
+			
+		VeigarConfig.combo:addParam("wasteall", "Cast everything in target", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("X"))
 		VeigarConfig.combo:addParam("spacebarActive", "SpaceToWin", SCRIPT_PARAM_ONKEYDOWN, false, spaceHK)
 		VeigarConfig.combo:addParam("cageTeamActive", "Cage Team", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
 	
 	VeigarConfig:addSubMenu("Drawing","draw")
 		VeigarConfig.draw:addParam("Erange", "Draw E range", SCRIPT_PARAM_ONOFF, true)
-		VeigarConfig.draw:addParam("ErangeMax", "Draw E rangeMax", SCRIPT_PARAM_ONOFF, false)
+		VeigarConfig.draw:addParam("ErangeMax", "Draw E rangeMax", SCRIPT_PARAM_ONOFF, true)
 		VeigarConfig.draw:addParam("Wrange", "Draw W range", SCRIPT_PARAM_ONOFF, false)
+		VeigarConfig.draw:addParam("AArange", "Draw AA range", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.draw:addParam("LifeSaverRange", "Draw LifeSaver range", SCRIPT_PARAM_ONOFF, false)
-		VeigarConfig.draw:addParam("drawLagFree","Lag free circles", SCRIPT_PARAM_ONOFF, false)
+		VeigarConfig.draw:addParam("drawLagFree","Lag free circles", SCRIPT_PARAM_ONOFF, true)
 		VeigarConfig.draw:addParam("chordLength","Lag Free Chord Length", SCRIPT_PARAM_SLICE, 75, 75, 2000, 0)
 		
 	VeigarConfig:addSubMenu("AutoFarm","farm")
 		VeigarConfig.farm:addParam("autoFarm", "Auto farm with Q", SCRIPT_PARAM_ONKEYTOGGLE, false, autoFarmKey)
+		VeigarConfig.farm:addParam("EnabledW", "Auto farm with W", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("K"))
 		VeigarConfig.farm:addParam("manasavep", "Mana % to conserve", SCRIPT_PARAM_SLICE, 1, 1, 100, 0)
 		VeigarConfig.farm:addParam("manasave", "Conserve mana during farm", SCRIPT_PARAM_ONOFF,false)
 		VeigarConfig.farm:addParam("SaveE", "Dont farm if Mana < EManaCost",  SCRIPT_PARAM_ONOFF, true)
 		VeigarConfig.farm:addParam("orbw", "Move To Mouse when farming",  SCRIPT_PARAM_ONOFF, false)
-		VeigarConfig.farm:addParam("farmm", "Select farming way preference", SCRIPT_PARAM_LIST, 1, { "Turn ON/OFF", "Hold and farm"})
+		VeigarConfig.farm:addParam("farmm", "Select Q farming way preference", SCRIPT_PARAM_LIST, 1, { "Turn ON/OFF", "Hold and farm"})
+		VeigarConfig.farm:addParam("farmm", "Select W farming way preference", SCRIPT_PARAM_LIST, 1, { "Turn ON/OFF", "Hold and farm"})
 		
 	VeigarConfig:addSubMenu("Harras","harras")
 		VeigarConfig.harras:addParam("Qharras", "Harras enemy in range with Q", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("V"))
@@ -168,7 +205,13 @@ function OnLoad()
 		VeigarConfig.LifeSaver:addParam("zwsave", "Auto activate Zhonyas/Wooglets", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver:addParam("zwhealth", "Min Health % for Zhonyas/Wooglets", SCRIPT_PARAM_SLICE, 15, 0, 100, -1)
 		VeigarConfig.LifeSaver:addParam("antign", "Auto Pots when ignited/morde R", SCRIPT_PARAM_ONOFF, true)
-		
+	
+	VeigarConfig:addSubMenu("Auto-Interrupt", "AutoInterrupt")
+        for i, spell in ipairs(spells) do
+			VeigarConfig.AutoInterrupt:addParam(spell.name, spell.menuname, SCRIPT_PARAM_ONOFF, true)
+        end
+	
+	--VeigarConfig:addSubMenu("","")
 	VeigarConfig:addSubMenu("Other","other")
 		VeigarConfig.other:addParam("savedfg", "Only use DFG in biggest combos", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("AutoBuy", "Buy Starting Items", SCRIPT_PARAM_ONKEYDOWN, false, AutoBuy)
@@ -188,12 +231,36 @@ function OnLoad()
 	NSOW = SOW(VP)
 	ts = TargetSelector(TARGET_LOW_HP, erange + eradius, DAMAGE_MAGIC)
 	ts.name = "Veigar"
+	EnemyMinions = minionManager(MINION_ENEMY, qrange, myHero, MINION_SORT_HEALTH_ASC)
+	EnemyMinions2 = minionManager(MINION_ENEMY, wrange, myHero, MINION_SORT_HEALTH_ASC)
 	VeigarConfig:addTS(ts)
 	VeigarConfig:addSubMenu("["..myHero.charName.." - OrbWalking]", "OrbWalking")
 		NSOW:LoadToMenu(VeigarConfig.OrbWalking)
 	
 end
 --[END OF THE MAIN PART]
+
+function OnProcessSpell(object, spell)
+    if object.team ~= myHero.team and object.type == myHero.type then
+        LastCastedSpell[object.networkID] = {name = spell.name:lower(), time = os.clock(), caster = object}
+		--cctime[object.networkID] = {time = os.clock()}
+    end
+end
+
+function interrupt()
+    if myHero:CanUseSpell(_E) == READY then
+        for i, spell in ipairs(spells) do
+            if VeigarConfig.AutoInterrupt[spell.name] then
+                for j, LastCast in pairs(LastCastedSpell) do
+                    if LastCast.name == spell.name:lower() and (os.clock() - LastCast.time) < 3 and GetDistance(LastCast.caster.visionPos, myHero.visionPos) < erange + 330 and ValidTarget(LastCast.caster) then
+                         useStun(LastCast.caster)
+                        break
+                    end
+                end
+            end
+        end
+    end
+end
 
 function DamageCalculator()
 	
@@ -364,12 +431,33 @@ function autoFarm()
 			end
 		end
 	end
+	
+	if VeigarConfig.farm.EnabledW then
+		Max = 0
+		local MaxPos
+		EnemyMinions2:update()
+		for i, minion in pairs(EnemyMinions2.objects) do
+			if (GetDistance(minion) < wrange) and (minion.charName:find("Wizard") or minion.charName:find("Caster")) then
+				Count = GetNMinionsHit(minion, wradius)
+				if Count > Max then
+					Max = Count
+					MaxPos = Vector(minion.x, 0, minion.z)
+					if (Max > 2) and (myHero.mana > ComboManaCost({_W, _E})) or not VeigarConfig.farm.SaveE and MaxPos ~= 0  then
+						CastSpell(_W, MaxPos.x, MaxPos.z)
+					end
+				end
+			end
+		end
+		
+
+	end
 end
 
 function AutoWharrasQ()
 	for i, enemy in ipairs(GetEnemyHeroes()) do
+		
 		if ValidTarget(enemy) then
-			if VeigarConfig.other.autoW and player:CanUseSpell(_W) == READY and enemy.canMove ~= true and IsGoodTarget(enemy, wRange) then
+			if VeigarConfig.other.autoW and player:CanUseSpell(_W) == READY and enemy.canMove ~= true and IsGoodTarget(enemy, erange) then
 				CastSpell(_W, enemy)
 				return
 			end
@@ -424,7 +512,7 @@ end
 
 function Drawing()
 	if VeigarConfig.draw.Erange then
-		CustomDrawCircle(player.x, player.y, player.z, qRange, qCircleColor)
+		CustomDrawCircle(player.x, player.y, player.z, qrange, qCircleColor)
 	end
 		
 	if VeigarConfig.draw.ErangeMax then
@@ -433,6 +521,10 @@ function Drawing()
 		
 	if VeigarConfig.draw.Wrange then
 		CustomDrawCircle(player.x, player.y, player.z, wRange, wCircleColor)
+	end
+	
+	if VeigarConfig.draw.AArange then
+		CustomDrawCircle(player.x, player.y, player.z, aarange, qCircleColor)
 	end
 	
 	if VeigarConfig.draw.LifeSaverRange then
@@ -811,6 +903,16 @@ function Potions()
 			end
 		end
 	end
+end
+
+function performWasteCombo()
+	targ = ts.target
+	local DFG = GetInventorySlotItem(3128)
+	if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() endUseSpell(ignite, targ) end 
+	if DFGI ~= 0 then CastSpell(DFG, targ) end
+	if Q ~= 0 then UseSpell(_Q, targ) end
+	if R ~= 0 then UseSpell(_R, targ) end
+	if ignitos ~= 0 then UseSpell(ignite, targ) end
 end
 
 function performSmartCombo()
@@ -1331,8 +1433,20 @@ function Checks()
 	--Farm way check--
 	if VeigarConfig.farm.farmm == 1 then SetMode = SCRIPT_PARAM_ONKEYTOGGLE else SetMode = SCRIPT_PARAM_ONKEYDOWN end
 	VeigarConfig.farm._param[1].pType = SetMode
+	if VeigarConfig.farm.farmmm == 1 then SetMode1 = SCRIPT_PARAM_ONKEYTOGGLE else SetMode1 = SCRIPT_PARAM_ONKEYDOWN end
+	VeigarConfig.farm._param[2].pType = SetMode
 	--Zhonya&Wooglet check--
 	znaReady = (zhonya ~= nil and myHero:CanUseSpell(zhonya) == READY)
 	wgtReady = (wooglet ~= nil and myHero:CanUseSpell(wooglet) == READY)
+end
+
+function GetNMinionsHit(Pos, radius)
+	local count = 0
+	for i, minion in pairs(EnemyMinions2.objects) do
+		if GetDistance(minion, Pos) < (radius + 50) then
+			count = count + 1
+		end
+	end
+	return count
 end
 
