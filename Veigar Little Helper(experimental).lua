@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 1.61
+local version = 1.7
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -132,7 +132,6 @@ function OnTick()
 	if VeigarConfig.combo.wasteall and ValidTarget(ts.target) then
 		performWasteCombo()
 	end
-	
 end
 
 function OnDraw()
@@ -162,7 +161,7 @@ function OnLoad()
 			VeigarConfig.combo.autokillf:addParam("onlyq", "Only LastHit enemies with Q", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveab", "Don't waste spells if OverDmg is > than", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveabsl", "OverDamage config ", SCRIPT_PARAM_SLICE, 1, 1, 1000, 0)
-
+			
 		VeigarConfig.combo:addParam("wasteall", "Cast everything in target", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("X"))
 		VeigarConfig.combo:addParam("spacebarActive", "SpaceToWin", SCRIPT_PARAM_ONKEYDOWN, false, spaceHK)
 		VeigarConfig.combo:addParam("cageTeamActive", "Cage Team", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
@@ -213,7 +212,6 @@ function OnLoad()
         end
 	
 	--VeigarConfig:addSubMenu("","")
-	
 	VeigarConfig:addSubMenu("Other","other")
 		VeigarConfig.other:addParam("savedfg", "Only use DFG in biggest combos", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("AutoBuy", "Buy Starting Items", SCRIPT_PARAM_ONKEYDOWN, false, AutoBuy)
