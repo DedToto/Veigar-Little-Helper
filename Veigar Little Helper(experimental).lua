@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 1.7
+local version = 1.9
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -9,17 +9,19 @@ local farmCheckTick = 100
 local int1 = 0
 local int2 = 0
 local int3 = 0
+local int4 = 0
+local int5 = 0
 local eTarget = nil
 local CT = 1000
 local Comboing = false
 local ComboTick = 0
+local znaReady = 0
+local wgtReady = 0
+local expos
 
 --[KEYS]--
 local autoFarmKey = string.byte("J")
-local ExtraInfoKey = string.byte("Z")
 local AutoBuy = string.byte("P")
-local MainCalcKey = string.byte("A")
-local AutoWKey = string.byte("G")
 
 --[SKILL INFO]--
 local Q = 0
@@ -41,6 +43,7 @@ local Rlevel = 0
 
 --[Skill attributes]--
 local qrange = 650
+local ignrange = 600
 local wcastspeed = 1.25 
 local wrange = 900
 local wradius = 230 
@@ -48,6 +51,7 @@ local eradius = 330
 local erange = 600
 local ecastspeed = 0.34 
 local aarange = 525
+local xprange = 1400
 
 --[MANACOSTS]--
 local QMana = {60, 65, 70, 75, 80}
@@ -125,13 +129,6 @@ function OnTick()
 	AutoLevel()
 	LifeSaver()
 	interrupt()
-	if VeigarConfig.combo.spacebarActive and ValidTarget(ts.target) then
-		performSmartCombo()
-	end
-	
-	if VeigarConfig.combo.wasteall and ValidTarget(ts.target) then
-		performWasteCombo()
-	end
 end
 
 function OnDraw()
@@ -146,6 +143,7 @@ end
 function OnLoad()
 	player = myHero
 	PrintChat("<font color=\"#ffffff\">You are using Veigar Little Helper ["..version.."] by DedToto.</font>")
+	enemyMinions = minionManager(MINION_ENEMY, qrange, myHero, MINION_SORT_HEALTH_ASC)
 	player = GetMyHero()
 	UpdateCheck()
 	IgniteCheck()
@@ -154,36 +152,59 @@ function OnLoad()
 	VeigarConfig = scriptConfig("Little Veigar Helper", "littlehelper")
 	
 	VeigarConfig:addSubMenu("Combo","combo")
-		VeigarConfig.combo:addParam("stunv", "Select E logic", SCRIPT_PARAM_LIST, 1, { "Standart", "Alternative"})
-			VeigarConfig.combo:addSubMenu("Auto R/Q Killable","autokillf")
-			VeigarConfig.combo.autokillf:addParam("autokill", "Auto ULT/Q killable", SCRIPT_PARAM_ONOFF, false)
-			VeigarConfig.combo.autokillf:addParam("usedfg", "Use DFG in Auto ULT/Q killable", SCRIPT_PARAM_ONOFF, false)
-			VeigarConfig.combo.autokillf:addParam("onlyq", "Only LastHit enemies with Q", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.combo:addSubMenu("Auto R/Q/IGN Killable","autokillf")
+			VeigarConfig.combo.autokillf:addParam("autokill", "Auto ULT/Q/IGN killable", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.combo.autokillf:addParam("user", "Use R", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.combo.autokillf:addParam("useq", "Use Q", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.combo.autokillf:addParam("usedfg", "Use DFG", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.combo.autokillf:addParam("useign", "Use IGN", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveab", "Don't waste spells if OverDmg is > than", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveabsl", "OverDamage config ", SCRIPT_PARAM_SLICE, 1, 1, 1000, 0)
-			
-		VeigarConfig.combo:addParam("wasteall", "Cast everything in target", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("X"))
-		VeigarConfig.combo:addParam("spacebarActive", "SpaceToWin", SCRIPT_PARAM_ONKEYDOWN, false, spaceHK)
-		VeigarConfig.combo:addParam("cageTeamActive", "Cage Team", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
+		VeigarConfig.combo:addParam("table","------------------Settings--------------",SCRIPT_PARAM_INFO,"")
+			VeigarConfig.combo:addParam("stunv", "Select E logic", SCRIPT_PARAM_LIST, 1, { "Standart", "Alternative"})
+			VeigarConfig.combo:addParam("forcestun", "Always cast E(even for Q+R kill)", SCRIPT_PARAM_ONOFF, false)	
+			VeigarConfig.combo:addParam("savedfg", "Only use DFG in biggest combos", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.combo:addParam("stuntt", "Stun Enemies attacked by turret", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.combo:addParam("ShowMana", "Show Time for full combo mana regen", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.combo:addParam("ShowCombo", "Show current spacebar combo(target)", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.combo:addParam("tryq", "Always try to lasthit enemy with Q", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.combo:addParam("forceaa", "AA after combo(RECOMMENDED)", SCRIPT_PARAM_ONOFF, true)	
+		VeigarConfig.combo:addParam("table","------------------Combos--------------",SCRIPT_PARAM_INFO,"")
+			VeigarConfig.combo:addParam("lightcombo", "Light Combo E+W+Q", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
+			VeigarConfig.combo:addParam("wasteall", "Cast everything in target", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
+			VeigarConfig.combo:addParam("spacebarActive", "SpaceToWin(SmartCombo)", SCRIPT_PARAM_ONKEYDOWN, false, spaceHK)
+			VeigarConfig.combo:addParam("cageTeamActive", "Cage Team", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
 	
 	VeigarConfig:addSubMenu("Drawing","draw")
-		VeigarConfig.draw:addParam("Erange", "Draw E range", SCRIPT_PARAM_ONOFF, true)
-		VeigarConfig.draw:addParam("ErangeMax", "Draw E rangeMax", SCRIPT_PARAM_ONOFF, true)
-		VeigarConfig.draw:addParam("Wrange", "Draw W range", SCRIPT_PARAM_ONOFF, false)
-		VeigarConfig.draw:addParam("AArange", "Draw AA range", SCRIPT_PARAM_ONOFF, false)
-		VeigarConfig.draw:addParam("LifeSaverRange", "Draw LifeSaver range", SCRIPT_PARAM_ONOFF, false)
-		VeigarConfig.draw:addParam("drawLagFree","Lag free circles", SCRIPT_PARAM_ONOFF, true)
-		VeigarConfig.draw:addParam("chordLength","Lag Free Chord Length", SCRIPT_PARAM_SLICE, 75, 75, 2000, 0)
+	
+		VeigarConfig.draw:addParam("table","------------------MyHero Related--------------",SCRIPT_PARAM_INFO,"")
+			VeigarConfig.draw:addParam("Erange", "Draw E,Q,R range", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.draw:addParam("ErangeMax", "Draw E rangeMax", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.draw:addParam("Wrange", "Draw W range", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.draw:addParam("AArange", "Draw AA range", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.draw:addParam("XPrange", "Draw XP range", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.draw:addParam("drawKillableMinions", "Draw Circle around killable minions", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.draw:addParam("LifeSaverRange", "Draw LifeSaver range", SCRIPT_PARAM_ONOFF, false)
+				
+		VeigarConfig.draw:addParam("table1","------------------Enemies Related-------------",SCRIPT_PARAM_INFO,"")
 		
+			VeigarConfig.draw:addParam("targg", "Mark Target with circle", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.draw:addParam("targ", "Draw line to Target(for team fights)", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.draw:addParam("ExtraInfo", "Draw best combo for kill", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.draw:addParam("MainCalc", "Draw Extra/Needed damage", SCRIPT_PARAM_ONOFF, true)
+	
+	VeigarConfig.draw:addParam("drawLagFree","Lag free circles", SCRIPT_PARAM_ONOFF, true)
+	VeigarConfig.draw:addParam("chordLength","Lag Free Chord Length", SCRIPT_PARAM_SLICE, 75, 75, 2000, 0)
+	
 	VeigarConfig:addSubMenu("AutoFarm","farm")
 		VeigarConfig.farm:addParam("autoFarm", "Auto farm with Q", SCRIPT_PARAM_ONKEYTOGGLE, false, autoFarmKey)
 		VeigarConfig.farm:addParam("EnabledW", "Auto farm with W", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("K"))
 		VeigarConfig.farm:addParam("manasavep", "Mana % to conserve", SCRIPT_PARAM_SLICE, 1, 1, 100, 0)
 		VeigarConfig.farm:addParam("manasave", "Conserve mana during farm", SCRIPT_PARAM_ONOFF,false)
-		VeigarConfig.farm:addParam("SaveE", "Dont farm if Mana < EManaCost",  SCRIPT_PARAM_ONOFF, true)
+		VeigarConfig.farm:addParam("SaveE", "Dont farm if Mana < EManaCost",  SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.farm:addParam("orbw", "Move To Mouse when farming",  SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.farm:addParam("farmm", "Select Q farming way preference", SCRIPT_PARAM_LIST, 1, { "Turn ON/OFF", "Hold and farm"})
-		VeigarConfig.farm:addParam("farmm", "Select W farming way preference", SCRIPT_PARAM_LIST, 1, { "Turn ON/OFF", "Hold and farm"})
+		VeigarConfig.farm:addParam("farmmm", "Select W farming way preference", SCRIPT_PARAM_LIST, 2, { "Turn ON/OFF", "Hold and farm"})
 		
 	VeigarConfig:addSubMenu("Harras","harras")
 		VeigarConfig.harras:addParam("Qharras", "Harras enemy in range with Q", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("V"))
@@ -193,14 +214,14 @@ function OnLoad()
 		VeigarConfig.harras:addParam("addq", "use Q in E+W Combo", SCRIPT_PARAM_ONOFF, false)
 
 	VeigarConfig:addSubMenu("Auto Potions","AP")
-		VeigarConfig.AP:addParam("hp", "Use potions when HP < %", SCRIPT_PARAM_SLICE, 0, 1, 100, 0)
-		VeigarConfig.AP:addParam("mp", "Use potions when Mana < %", SCRIPT_PARAM_SLICE, 0, 1, 100, 0)
-		VeigarConfig.AP:addParam("flask", "Use flask as HP potion settings", SCRIPT_PARAM_ONOFF, true)
+		VeigarConfig.AP:addParam("pots", "Use autopotions", SCRIPT_PARAM_ONOFF, false)
+		VeigarConfig.AP:addParam("hp", "Use potions when HP < %", SCRIPT_PARAM_SLICE, 60, 1, 100, 0)
+		VeigarConfig.AP:addParam("mp", "Use potions when Mana < %", SCRIPT_PARAM_SLICE, 15, 1, 100, 0)
 		VeigarConfig.AP:addParam("elixir", "Auto Elixir of Fortitude when  < %", SCRIPT_PARAM_SLICE, 0, 1, 100, 0)		
 	
 	VeigarConfig:addSubMenu("Life Saver","LifeSaver")
 		VeigarConfig.LifeSaver:addParam("LifeSaver", "Stun enemies Who come too close", SCRIPT_PARAM_ONOFF, false)
-		VeigarConfig.LifeSaver:addParam("LifeSaverRange","Range of LifeSaver", SCRIPT_PARAM_SLICE, 1, 1, 800, 0)
+		VeigarConfig.LifeSaver:addParam("LifeSaverRange","Range of LifeSaver", SCRIPT_PARAM_SLICE, 400, 1, 800, 0)
 		VeigarConfig.LifeSaver:addParam("usew", "Use W on emeies caught in LifeSaver", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver:addParam("zwsave", "Auto activate Zhonyas/Wooglets", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver:addParam("zwhealth", "Min Health % for Zhonyas/Wooglets", SCRIPT_PARAM_SLICE, 15, 0, 100, -1)
@@ -212,20 +233,20 @@ function OnLoad()
         end
 	
 	--VeigarConfig:addSubMenu("","")
+
 	VeigarConfig:addSubMenu("Other","other")
-		VeigarConfig.other:addParam("savedfg", "Only use DFG in biggest combos", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("AutoBuy", "Buy Starting Items", SCRIPT_PARAM_ONKEYDOWN, false, AutoBuy)
 		VeigarConfig.other:addParam("Autolvl", "Auto level up skills", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("lvlup", "Select skill sequence", SCRIPT_PARAM_LIST, 1, { "Q>W>E", "W>Q>E", "W>E>Q" })
 		VeigarConfig.other:addParam("autoW", "Auto W Stunned Enemies", SCRIPT_PARAM_ONOFF, false)
-		VeigarConfig.other:addParam("ShowMana", "Show Time For Mana Regen", SCRIPT_PARAM_ONOFF, true)
 		VeigarConfig.other:addParam("Death", "Show Info After Death", SCRIPT_PARAM_ONOFF, false)
-		VeigarConfig.other:addParam("ExtraInfo", "Show Best Killing Combo", SCRIPT_PARAM_ONKEYTOGGLE, true, ExtraInfoKey)
-		VeigarConfig.other:addParam("MainCalc", "Show Main Calculations", SCRIPT_PARAM_ONKEYTOGGLE, true, MainCalcKey)
+	
+	VeigarConfig:addParam("info",">> Version "..version.."",SCRIPT_PARAM_INFO,"")
 	
 	VeigarConfig.combo:permaShow("spacebarActive")
+	VeigarConfig.combo:permaShow("wasteall")
+	VeigarConfig.combo:permaShow("lightcombo")
 	VeigarConfig.farm:permaShow("autoFarm")
-	VeigarConfig.other:permaShow("ExtraInfo")
 	
 	VP = VPrediction(true)
 	NSOW = SOW(VP)
@@ -240,11 +261,26 @@ function OnLoad()
 end
 --[END OF THE MAIN PART]
 
-function OnProcessSpell(object, spell)
-    if object.team ~= myHero.team and object.type == myHero.type then
-        LastCastedSpell[object.networkID] = {name = spell.name:lower(), time = os.clock(), caster = object}
-		--cctime[object.networkID] = {time = os.clock()}
-    end
+function OnProcessSpell(object, spellProc)
+	targt = spellProc.target
+	if object.type == "obj_AI_Turret" and GetDistance(player, targt) < (erange + eradius) then
+		if targt.type == myHero.type and VeigarConfig.combo.stuntt then
+		useStun(targt)
+		end
+	end
+end
+
+function performLightCombo()
+		targ = ts.target
+		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
+		UseSpell(_Q, targ)
+		int4 = 0
+end
+
+function aa()
+	if VeigarConfig.autoattack and ValidTarget(ts.target) and GetDistance(ts.target) <= aarange then
+		myHero:Attack(ts.target)
+	end
 end
 
 function interrupt()
@@ -264,7 +300,7 @@ end
 
 function DamageCalculator()
 	
-	if VeigarConfig.other.MainCalc then
+	if VeigarConfig.draw.MainCalc then
 		for i, enemy in ipairs(GetEnemyHeroes()) do
 			if ValidTarget(enemy) then
 			local Qdmg = getDmg("Q", enemy, myHero)
@@ -309,7 +345,7 @@ end
 
 function ExtraInformation()
 
-	if VeigarConfig.other.ExtraInfo then
+	if VeigarConfig.draw.ExtraInfo then
 		for i, enemy in ipairs(GetEnemyHeroes()) do
 			if ValidTarget(enemy) then
 				local Qdmg = getDmg("Q", enemy, myHero)
@@ -326,22 +362,42 @@ function ExtraInformation()
 				if DFGI ~= 0 then DFGdmg = getDmg("DFG", enemy ,myHero) end
 				
 				if VeigarConfig.combo.autokillf.autokill and not VeigarConfig.combo.spacebaractive then
-					if (enemy.health < Qdmg and Q ~= 0 and GetDistance(enemy) < qrange ) then
+					if (enemy.health < Qdmg and Q ~= 0 and GetDistance(enemy) < qrange and VeigarConfig.combo.autokillf.useq) then
 						UseSpell(_Q, enemy)
-						elseif (enemy.health < Rdmg and R ~= 0 and not VeigarConfig.combo.autokillf.onlyq and GetDistance(enemy) < qrange) then
+						elseif (enemy.health < IGNITEdmg and ignitos ~= 0 and GetDistance(enemy) < ignrange and VeigarConfig.combo.autokillf.useign) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - IGNITEdmg) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
+						UseSpell(ignite, enemy)
+						end
+						elseif (enemy.health < Rdmg and R ~= 0 and GetDistance(enemy) < qrange and VeigarConfig.combo.autokillf.user) then
 						if VeigarConfig.combo.autokillf.saveab then
 							if (enemy.health - Rdmg) > VeigarConfig.combo.autokillf.saveabsl then return end
 						else
 						UseSpell(_R, enemy)
 						end
-						elseif (enemy.health < (Qdmg + Rdmg) and Q ~= 0 and R ~= 0 and not VeigarConfig.combo.autokillf.onlyq and GetDistance(enemy) < qrange) then
+						elseif (enemy.health < (Qdmg + IGNITEdmg) and Q ~= 0 and ignitos ~= 0 and GetDistance(enemy) < ignrange and VeigarConfig.combo.autokillf.useign and VeigarConfig.combo.autokillf.useq) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - (Qdmg + IGNITEdmg)) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
+						UseSpell(ignite, enemy)
+						UseSpell(_Q, enemy)
+						end
+						elseif (enemy.health < (Rdmg + IGNITEdmg) and R ~= 0 and ignitos ~= 0 and GetDistance(enemy) < ignrange and VeigarConfig.combo.autokillf.useign and VeigarConfig.combo.autokillf.user) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - (Rdmg + IGNITEdmg)) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
+						UseSpell(_R, enemy)
+						UseSpell(ignite, enemy)
+						end
+						elseif (enemy.health < (Qdmg + Rdmg) and Q ~= 0 and R ~= 0 and GetDistance(enemy) < qrange and VeigarConfig.combo.autokillf.useq and VeigarConfig.combo.autokillf.user) then
 						if VeigarConfig.combo.autokillf.saveab then
 							if (enemy.health - (Rdmg + Qdmg)) > VeigarConfig.combo.autokillf.saveabsl then return end
 						else
 						UseSpell(_R, enemy)
 						UseSpell(_Q, enemy)
 						end
-						elseif (enemy.health < (Qdmgi + DFGdmg) and Q ~= 0 and DFGI ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < qrange ) then
+						elseif (enemy.health < (Qdmgi + DFGdmg) and Q ~= 0 and DFGI ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < qrange and VeigarConfig.combo.autokillf.useq) then
 						if VeigarConfig.combo.autokillf.saveab then
 							if (enemy.health - (DFGdmg + Qdmgi)) > VeigarConfig.combo.autokillf.saveabsl then return end
 						else
@@ -349,7 +405,15 @@ function ExtraInformation()
 						CastSpell(DFG, enemy)
 						UseSpell(_Q, enemy)
 						end
-						elseif (enemy.health < (Rdmgi + DFGdmg) and R ~= 0 and DFGI ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < qrange and not VeigarConfig.combo.autokillf.onlyq ) then
+						elseif (enemy.health < (IGNITEdmg + DFGdmg) and ignitos ~= 0 and DFGI ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < ignrange and VeigarConfig.combo.autokillf.useign and VeigarConfig.combo.autokillf.usedfg ) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - (DFGdmg + IGNITEdmg)) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
+						DFG = GetInventorySlotItem(3128)
+						CastSpell(DFG, enemy)
+						UseSpell(ignite, enemy)
+						end
+						elseif (enemy.health < (Rdmgi + DFGdmg) and R ~= 0 and DFGI ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < qrange and VeigarConfig.combo.autokillf.user) then
 						if VeigarConfig.combo.autokillf.saveab then
 							if (enemy.health - (DFGdmg + Rdmgi)) > VeigarConfig.combo.autokillf.saveabsl then return end
 						else
@@ -357,13 +421,41 @@ function ExtraInformation()
 						CastSpell(DFG, enemy)
 						UseSpell(_R, enemy)
 						end
-						elseif (enemy.health < (Qdmgi + Rdmgi + DFGdmg) and Q ~= 0 and R ~= 0 and DFGI ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < qrange and not VeigarConfig.combo.autokillf.onlyq) then
+						elseif (enemy.health < (DFGdmg + Qdmgi + IGNITEdmg) and Q ~= 0 and DFGI ~= 0 and ignitos ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < ignrange and VeigarConfig.combo.autokillf.useq and VeigarConfig.combo.autokillf.useign) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - (DFGdmg + Qdmgi + IGNITEdmg)) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
+						DFG = GetInventorySlotItem(3128)
+						CastSpell(DFG, enemy)
+						UseSpell(ignite, enemy)
+						UseSpell(_Q, enemy)
+						end
+						elseif (enemy.health < (DFGdmg + Rdmgi + IGNITEdmg) and R ~= 0 and DFGI ~= 0 and ignitos ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < ignrange and VeigarConfig.combo.autokillf.user and VeigarConfig.combo.autokillf.useign) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - (DFGdmg + Rdmgi + IGNITEdmg)) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
+						DFG = GetInventorySlotItem(3128)
+						CastSpell(DFG, enemy)
+						UseSpell(_R, enemy)
+						UseSpell(ignite, enemy)
+						end
+						elseif (enemy.health < (Qdmgi + Rdmgi + DFGdmg) and Q ~= 0 and R ~= 0 and DFGI ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < qrange and VeigarConfig.combo.autokillf.useq and VeigarConfig.combo.autokillf.user ) then
 						if VeigarConfig.combo.autokillf.saveab then
 							if (enemy.health - (DFGdmg + Qdmgi + Rdmgi)) > VeigarConfig.combo.autokillf.saveabsl then return end
 						else
 						DFG = GetInventorySlotItem(3128)
 						CastSpell(DFG, enemy)
 						UseSpell(_R, enemy)
+						UseSpell(_Q, enemy)
+						end
+						elseif (enemy.health < (Qdmgi + Rdmgi + DFGdmg + IGNITEdmg) and Q ~= 0 and R ~= 0 and DFGI ~= 0 and ignitos ~= 0 and VeigarConfig.combo.autokillf.usedfg and GetDistance(enemy) < ignrange and VeigarConfig.combo.autokillf.useq and VeigarConfig.combo.autokillf.user and VeigarConfig.combo.autokillf.useign) then
+						if VeigarConfig.combo.autokillf.saveab then
+							if (enemy.health - (DFGdmg + Qdmgi + Rdmgi + IGNITEdmg)) > VeigarConfig.combo.autokillf.saveabsl then return end
+						else
+						DFG = GetInventorySlotItem(3128)
+						CastSpell(DFG, enemy)
+						UseSpell(_R, enemy)
+						UseSpell(ignite, enemy)
 						UseSpell(_Q, enemy)
 						end
 					end
@@ -373,6 +465,12 @@ function ExtraInformation()
 					DrawText3D(("Q"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true) 
 					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																													--DFG Q
 					DrawText3D(("|DFG|Q"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (Wdmg + AAdmg) and W ~= 0 and E ~= 0) then																																--W
+					DrawText3D(("W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (Wdmg + DFGdmg + AAdmg) and W ~= 0 and E ~= 0 and DFGI ~= 0) then																										--DFG W	
+					DrawText3D(("|DFG|W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (IGNITEdmg) and ignitos ~= 0) then																																		--IGN
+					DrawText3D(("IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
 					elseif (enemy.health < (Qdmg + Wdmg + AAdmg) and Q ~= 0 and W ~= 0 ) then 																														--Q+W
 					DrawText3D(("Q+W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
 					elseif (enemy.health < (Qdmgi + Wdmgi + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0) then 																								--DFG Q+W
@@ -381,6 +479,8 @@ function ExtraInformation()
 					DrawText3D(("Q+W+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
 					elseif (enemy.health < (Qdmgi + Wdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																	--DFG Q+W+IGN
 					DrawText3D(("|DFG|Q+W+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Rdmg + AAdmg) and R ~= 0) then																																			--R
+					DrawText3D(("R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
 					elseif (enemy.health < (Qdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 ) then																														--Q+R
 					DrawText3D(("Q+R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
 					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																								--DFG Q+R
@@ -408,7 +508,7 @@ function autoFarm()
 
 	local usedQ = false
 	if VeigarConfig.farm.autoFarm and GetTickCount() > lastFarmCheck + farmCheckTick then
-		if not VeigarConfig.combo.spacebarActive and not VeigarConfig.harras.eCastActive then
+		if not VeigarConfig.combo.spacebarActive and not VeigarConfig.harras.eCastActive and not VeigarConfig.harras.Qharras and not VeigarConfig.combo.cageTeamActive and not VeigarConfig.combo.wasteall and not VeigarConfig.combo.lightcombo then
 			if (VeigarConfig.farm.manasave and manaPct() > VeigarConfig.farm.manasavep) or not VeigarConfig.farm.manasave then
 				if myHero.mana > ComboManaCost({_Q, _E}) or not VeigarConfig.farm.SaveE then
 				if VeigarConfig.farm.orbw then moveToMouse() end
@@ -442,7 +542,7 @@ function autoFarm()
 				if Count > Max then
 					Max = Count
 					MaxPos = Vector(minion.x, 0, minion.z)
-					if (Max > 2) and (myHero.mana > ComboManaCost({_W, _E})) or not VeigarConfig.farm.SaveE and MaxPos ~= 0  then
+					if (Max > 4) and (myHero.mana > ComboManaCost({_Q, _E})) or not VeigarConfig.farm.SaveE and MaxPos ~= 0  then
 						CastSpell(_W, MaxPos.x, MaxPos.z)
 					end
 				end
@@ -527,8 +627,78 @@ function Drawing()
 		CustomDrawCircle(player.x, player.y, player.z, aarange, qCircleColor)
 	end
 	
+	if VeigarConfig.draw.XPrange then
+		CustomDrawCircle(player.x, player.y, player.z, xprange, qCircleColor)
+	end
+	
 	if VeigarConfig.draw.LifeSaverRange then
 		CustomDrawCircle(player.x, player.y, player.z, VeigarConfig.LifeSaver.LifeSaverRange, wCircleColor)
+	end
+	
+	if VeigarConfig.draw.targg and ValidTarget(ts.target) then
+	targ = ts.target
+    DrawCircle(targ.x, targ.y, targ.z, 100, ARGB(250, 253, 33, 33))
+    end
+	
+	if VeigarConfig.draw.targ and ValidTarget(ts.target) then    
+	targ = ts.target    
+		DrawLine3D(myHero.x, myHero.y, myHero.z, targ.x, targ.y, targ.z, 5, ARGB(250,235,33,33))
+    end
+	
+	if VeigarConfig.draw.drawKillableMinions then
+      enemyMinions:update()
+      if enemyMinions.objects[1] then
+        local targetMinion = enemyMinions.objects[1]
+
+        if ValidTarget(targetMinion, erange+eradius) and string.find(targetMinion.name, "Minion_") then
+          if targetMinion.health < player:CalcMagicDamage(targetMinion, 45 * (player:GetSpellData(_Q).level - 1) + 80 + (.6 * player.ap)) then
+           DrawCircle(targetMinion.x,targetMinion.y,targetMinion.z, 75, qCircleColor)
+          end
+        end
+      end
+    end
+	
+	if int5 ~= 0 and ts.target ~= nil and VeigarConfig.combo.ShowCombo then
+	targ = ts.target
+		if int5 == 1 then
+			DrawText3D(("Q"), targ.x, targ.y + 2, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 2 then
+			DrawText3D(("|DFG|Q"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 17 then
+			DrawText3D(("W"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 18 then
+			DrawText3D(("|DFG|W"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true)
+			elseif int5 == 19 then
+			DrawText3D(("IGN"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 			
+			elseif int5 == 3 then
+			DrawText3D(("Q+W"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 4 then
+			DrawText3D(("|DFG|Q+W"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 5 then
+			DrawText3D(("Q+W+IGN"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 6 then
+			DrawText3D(("|DFG|Q+W+IGN"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 16 then
+			DrawText3D(("R"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 7 then
+			DrawText3D(("Q+R"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 8 then
+			DrawText3D(("|DFG|Q+R"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 9 then
+			DrawText3D(("Q+R+IGN"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 10 then
+			DrawText3D(("|DFG|Q+R+IGN"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 11 then
+			DrawText3D(("Q+W+R"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 12 then
+			DrawText3D(("|DFG|Q+W+R"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 13 then
+			DrawText3D(("Q+W+R+IGN"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 14 then
+			DrawText3D(("|DFG|Q+W+R+IGN"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true) 
+			elseif int5 == 15 then	
+			DrawText3D(("unkillable"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true)
+		end
 	end
 end
 
@@ -716,7 +886,7 @@ function AutoBuyy()
 end
 
 function ManaRegenSec()
-	if VeigarConfig.other.ShowMana then
+	if VeigarConfig.combo.ShowMana then
 		if not myHero.dead or VeigarConfig.other.Death then
 			if myHero.mana < ComboManaCost({_Q, _W, _E, _R}) then
 				DrawNoMana()
@@ -853,9 +1023,14 @@ function Circle:__tostring()
 end
 
 function Potions()
-		if VeigarConfig.LifeSaver.zwitems and myHero.health < (myHero.maxHealth * (VeigarConfig.LifeSaver.zwhealth / 100))
-			and (znaReady or wgtReady) then
-				CastSpell((zhonya or wooglet)) 
+		if VeigarConfig.LifeSaver.zwsave and myHero.health < (myHero.maxHealth * (VeigarConfig.LifeSaver.zwhealth / 100)) then
+			if znaReady then
+				CastSpell(zhonya)
+			end
+			
+			if wgtReady then
+				CastSpell(wooglet)
+			end
 		end
 
 		if  TargetHaveBuff("SummonerDot", myHero) or TargetHaveBuff("MordekaiserChildrenOfTheGrave", myHero) and not InFountain() and VeigarConfig.LifeSaver.antign then
@@ -871,7 +1046,7 @@ function Potions()
 				CastSpell(elixir)
 			end
 		end
-	
+	if VeigarConfig.AP.pots then
 	if not TargetHaveBuff("Recall", myHero) and not TargetHaveBuff("SummonerTeleport", myHero) and not TargetHaveBuff("RecallImproved", myHero) and not InFountain() then
 		if VeigarConfig.AP.hp and hppot ~= nil then
 			if ((myHero.health/myHero.maxHealth)*100) < VeigarConfig.AP.hp and not TargetHaveBuff("RegenerationPotion", myHero) then
@@ -891,7 +1066,7 @@ function Potions()
 			end
 		end
 		
-		if VeigarConfig.AP.flask and flaskk ~= nil and VeigarConfig.AP.flask then
+		if VeigarConfig.AP.flask and flaskk ~= nil then
 			if ((myHero.health/myHero.maxHealth)*100) < VeigarConfig.AP.hp and not TargetHaveBuff("ItemCrystalFlask", myHero) then
 				CastSpell(flaskk)
 			end
@@ -903,6 +1078,7 @@ function Potions()
 			end
 		end
 	end
+	end
 end
 
 function performWasteCombo()
@@ -910,9 +1086,16 @@ function performWasteCombo()
 	local DFG = GetInventorySlotItem(3128)
 	if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() endUseSpell(ignite, targ) end 
 	if DFGI ~= 0 then CastSpell(DFG, targ) end
+	if VeigarConfig.combo.tryq then
+	if R ~= 0 then UseSpell(_R, targ) end
+	if ignitos ~= 0 then UseSpell(ignite, targ) end
+	if Q ~= 0 then UseSpell(_Q, targ) end
+	else
 	if Q ~= 0 then UseSpell(_Q, targ) end
 	if R ~= 0 then UseSpell(_R, targ) end
 	if ignitos ~= 0 then UseSpell(ignite, targ) end
+	end
+	int4 = 0
 end
 
 function performSmartCombo()
@@ -924,34 +1107,61 @@ function performSmartCombo()
 		aTime[targ.name] = GetTickCount()
 	end
 	if combo == 1 then
+	int4 = 1
 		performcombo1()
 	elseif combo == 2 then
+	int4 = 1
 		performcombo2()
+	elseif combo == 17 then
+	int4 = 1
+		performcombo17()
+	elseif combo == 18 then
+	int4 = 1
+		performcombo18()
+	elseif combo == 19 then
+	int4 = 1
+		performcombo19()
 	elseif combo == 3 then
+	int4 = 1
 		performcombo3()
 	elseif combo == 4 then
+	int4 = 1
 		performcombo4()
 	elseif combo == 5 then
+	int4 = 1
 		performcombo5()
 	elseif combo == 6 then
+	int4 = 1
 		performcombo6()
+	elseif combo == 16 then
+	int4 = 1
+		performcombo16()
 	elseif combo == 7 then
+	int4 = 1
 		performcombo7()
 	elseif combo == 8 then
+	int4 = 1
 		performcombo8()
 	elseif combo == 9 then
+	int4 = 1
 		performcombo9()
 	elseif combo == 10 then
+	int4 = 1
 		performcombo10()
 	elseif combo == 11 then
+	int4 = 1
 		performcombo11()
 	elseif combo == 12 then
+	int4 = 1
 		performcombo12()
 	elseif combo == 13 then
+	int4 = 1
 		performcombo13()
 	elseif combo == 14 then
+	int4 = 1
 		performcombo14()
 	elseif combo == 15 then
+	int4 = 1
 		performcombo15()		
 	end
 end
@@ -977,103 +1187,159 @@ function dmgCalc(drawtarget)
 		local Rdmgi = Rdmg * 1.2
 		if DFGI ~= 0 then DFGdmg = getDmg("DFG", drawtarget,myHero) end
 		
-				if VeigarConfig.other.savedfg then
+				if VeigarConfig.combo.savedfg then
 					if (drawtarget.health <= (Qdmg + AAdmg) and Q ~= 0 ) then																																				--Q
 						aCombo[drawtarget.name] = 1
 						return 1
 						--elseif (drawtarget.health <= (Qdmgi + AAdmg + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																												--DFG Q
 						--aCombo[drawtarget.name] = 2
 						--return 2
+						--int5 = 1
+						elseif (drawtarget.health <= (Wdmg + AAdmg) and W ~= 0 and E ~= 0) then																																--W
+						aCombo[drawtarget.name] = 17
+						int5 = 17
+						return 17
+						elseif (drawtarget.health <= (Wdmgi + DFGdmg + AAdmg) and W ~= 0 and E ~= 0 and DFGI ~= 0) then																										--DFG W						--W
+						aCombo[drawtarget.name] = 17
+						int5 = 18
+						return 18
+						elseif (drawtarget.health <= (IGNITEdmg) and ignitos ~= 0) then																																		--IGNITE
+						int5 = 19
+						return 19
 						elseif (drawtarget.health <= (Qdmg + Wdmg + AAdmg) and Q ~= 0 and W ~= 0 and E ~= 0) then 																											--Q+W
 						aCombo[drawtarget.name] = 3
 						return 3
 						--elseif (drawtarget.health <= (Qdmgi + Wdmgi + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0 and E ~= 0) then 																				--DFG Q+W
 						--aCombo[drawtarget.name] = 4
 						--return 4
+						--int5 = 3
 						elseif (drawtarget.health <= (Qdmg + Wdmg + IGNITEdmg + AAdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and E ~= 0) then																				--Q+W+IGN
 						aCombo[drawtarget.name] = 5
 						return 5
+						--int5 = 5
 						--elseif (drawtarget.health <= (Qdmgi + Wdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0 and E ~= 0) then													--DFG Q+W+IGN
 						--aCombo[drawtarget.name] = 6
 						--return 6
+						elseif (drawtarget.health <= (Rdmg + AAdmg) and R ~= 0) then																																		--R
+						aCombo[drawtarget.name] = 16
+						return 16
+						--int5 = 16
 						elseif (drawtarget.health <= (Qdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 ) then																														--Q+R
 						aCombo[drawtarget.name] = 7
 						return 7
+						--int5 = 7
 						--elseif (drawtarget.health <= (Qdmgi + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																							--DFG Q+R
 						--aCombo[drawtarget.name] = 8
 						--return 8
 						elseif (drawtarget.health <= (Qdmg + IGNITEdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 and ignitos ~= 0 ) then																						--Q+R+IGN
 						aCombo[drawtarget.name] = 9
 						return 9
+						--int5 = 9
 						--elseif (drawtarget.health <= (Qdmgi + IGNITEdmg + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																--DFG Q+R+IGN
 						--aCombo[drawtarget.name] = 10
 						--return 10
 						elseif (drawtarget.health <= (Qdmg + Wdmg + Rdmg + AAdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and E ~= 0) then																						--Q+W+R
 						aCombo[drawtarget.name] = 11
 						return 11
+						--int5 = 11
 						elseif (drawtarget.health <= (Qdmgi + Wdmgi + Rdmgi + AAdmg + DFGdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and DFGI ~= 0 and E ~= 0) then																--DFG Q+W+R
 						aCombo[drawtarget.name] = 12
 						return 12
+						--int5 = 12
 						elseif (drawtarget.health <= (Qdmg + Wdmg + Rdmg + IGNITEdmg + AAdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and E ~= 0 ) then												 			--Q+W+R+IGN
 						aCombo[drawtarget.name] = 13
 						return 13
+						--int5 = 13
 						elseif (drawtarget.health <= (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0 and E ~= 0) then									--DFG Q+W+R+IGN
 						aCombo[drawtarget.name] = 14
 						return 14
+						--int5 = 14
 						elseif (drawtarget.health > (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0) then																									--unkillable
 						aCombo[drawtarget.name] = 15
 						return 15
+						--int5 = 15
 					end
 					else
 					if (drawtarget.health <= (Qdmg + AAdmg) and Q ~= 0 ) then																																				--Q
 						aCombo[drawtarget.name] = 1
+						int5 = 1
 						return 1
 						elseif (drawtarget.health <= (Qdmgi + AAdmg + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																												--DFG Q
 						aCombo[drawtarget.name] = 2
+						int5 = 2
 						return 2
+						elseif (drawtarget.health <= (Wdmg + AAdmg) and W ~= 0 and E ~= 0) then																																--W
+						aCombo[drawtarget.name] = 17
+						int5 = 17
+						return 17
+						elseif (drawtarget.health <= (Wdmgi + DFGdmg + AAdmg) and W ~= 0 and E ~= 0 and DFGI ~= 0) then																										--DFG W						--W
+						aCombo[drawtarget.name] = 17
+						int5 = 18
+						return 18
+						elseif (drawtarget.health <= (IGNITEdmg) and ignitos ~= 0) then																																		--IGNITE
+						int5 = 19
+						return 19
 						elseif (drawtarget.health <= (Qdmg + Wdmg + AAdmg) and Q ~= 0 and W ~= 0 and E ~= 0) then 																											--Q+W
 						aCombo[drawtarget.name] = 3
+						int5 = 3
 						return 3
 						elseif (drawtarget.health <= (Qdmgi + Wdmgi + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0 and E ~= 0) then 																					--DFG Q+W
 						aCombo[drawtarget.name] = 4
+						int5 = 4
 						return 4
 						elseif (drawtarget.health <= (Qdmg + Wdmg + IGNITEdmg + AAdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and E ~= 0) then																				--Q+W+IGN
 						aCombo[drawtarget.name] = 5
+						int5 = 5
 						return 5
 						elseif (drawtarget.health <= (Qdmgi + Wdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0 and E ~= 0) then														--DFG Q+W+IGN
 						aCombo[drawtarget.name] = 6
+						int5 = 6
 						return 6
+						elseif (drawtarget.health <= (Rdmg + AAdmg) and R ~= 0) then																																		--R
+						aCombo[drawtarget.name] = 16
+						int5 = 16
+						return 16
 						elseif (drawtarget.health <= (Qdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 ) then																														--Q+R
 						aCombo[drawtarget.name] = 7
+						int5 = 7
 						return 7
 						elseif (drawtarget.health <= (Qdmgi + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																								--DFG Q+R
 						aCombo[drawtarget.name] = 8
+						int5 = 8
 						return 8
 						elseif (drawtarget.health <= (Qdmg + IGNITEdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 and ignitos ~= 0 ) then																						--Q+R+IGN
 						aCombo[drawtarget.name] = 9
+						int5 = 9
 						return 9
 						elseif (drawtarget.health <= (Qdmgi + IGNITEdmg + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																--DFG Q+R+IGN
 						aCombo[drawtarget.name] = 10
+						int5 = 10
 						return 10
 						elseif (drawtarget.health <= (Qdmg + Wdmg + Rdmg + AAdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and E ~= 0) then																						--Q+W+R
 						aCombo[drawtarget.name] = 11
+						int5 = 11
 						return 11
 						elseif (drawtarget.health <= (Qdmgi + Wdmgi + Rdmgi + AAdmg + DFGdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and DFGI ~= 0 and E ~= 0) then																--DFG Q+W+R
 						aCombo[drawtarget.name] = 12
+						int5 = 12
 						return 12
 						elseif (drawtarget.health <= (Qdmg + Wdmg + Rdmg + IGNITEdmg + AAdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and E ~= 0 ) then												 			--Q+W+R+IGN
 						aCombo[drawtarget.name] = 13
+						int5 = 13
 						return 13
 						elseif (drawtarget.health <= (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0 and E ~= 0) then									--DFG Q+W+R+IGN
 						aCombo[drawtarget.name] = 14
+						int5 = 14
 						return 14
-						elseif (drawtarget.health > (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0) then																									--unkillable
+						elseif Q ~= 0 then																																													--unkillable
 						aCombo[drawtarget.name] = 15
+						int5 = 15
 						return 15
 					end
 				end
 				
 		aCombo[drawtarget.name] = 0
+		int5 = 0 
 		return 0
 	end
 end
@@ -1081,41 +1347,47 @@ end
 function performcombo1()
 	if ts.target ~= nil then
 		targ = ts.target
-		if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end
-		UseSpell(_Q, targ)
+		if VeigarConfig.combo.forcestun then if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end end
+			UseSpell(_Q, targ)
+			int4 = 0
 	end
 end
 
 function performcombo2()
 	if ts.target ~= nil then
-	local DFG = GetInventorySlotItem(3128)
+		local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
-		if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end
-		CastSpell(DFG, targ)
-		UseSpell(_Q, targ)
-		
+			
+		if VeigarConfig.combo.forcestun then if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end end
+			CastSpell(DFG, targ)
+			UseSpell(_Q, targ)
+			int4 = 0
 	end
 end
 
 function performcombo3()
 	if ts.target ~= nil then 
 		targ = ts.target
+			
 		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
-		
-		UseSpell(_Q, targ)
-		
+			if W ~= 1 then
+			UseSpell(_Q, targ)
+			end
+			int4 = 0
 	end
 end
 
 function performcombo4()
 	if ts.target ~= nil then 
-	local DFG = GetInventorySlotItem(3128)
-		targ = ts.target
+		local DFG = GetInventorySlotItem(3128)
+			targ = ts.target
+			
 		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
-		CastSpell(DFG, targ)
-		
-		UseSpell(_Q, targ)
-		
+			if W ~= 1 then
+			CastSpell(DFG, targ)
+			UseSpell(_Q, targ)
+			end
+			int4 = 0
 	end
 end
 
@@ -1123,10 +1395,16 @@ function performcombo5()
 	if ts.target ~= nil then 
 		targ = ts.target
 		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
-		
-		UseSpell(_Q, targ)
-		UseSpell(ignite, targ)
-		
+			if W ~= 1 then
+			if VeigarConfig.combo.tryq then
+			UseSpell(ignite, targ)
+			UseSpell(_Q, targ)
+			else
+			UseSpell(_Q, targ)
+			UseSpell(ignite, targ)
+			end
+		end
+		int4 = 0
 	end
 end
 
@@ -1135,21 +1413,32 @@ function performcombo6()
 	local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
 		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
-		CastSpell(DFG, targ)
-		
-		UseSpell(_Q, targ)
-		UseSpell(ignite, targ)
-		
+			if W ~= 1 then
+			CastSpell(DFG, targ)
+			if VeigarConfig.combo.tryq then
+			UseSpell(ignite, targ)
+			UseSpell(_Q, targ)
+			else
+			UseSpell(_Q, targ)
+			UseSpell(ignite, targ)
+			end
+		end
+		int4 = 0
 	end
 end
 
 function performcombo7()
 	if ts.target ~= nil then 
 		targ = ts.target
-		if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end
+		if VeigarConfig.combo.forcestun then if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end end
+		if VeigarConfig.combo.tryq then
+		UseSpell(_R, targ)
+		UseSpell(_Q, targ)
+		else
 		UseSpell(_Q, targ)
 		UseSpell(_R, targ)
-		
+		end
+		int4 = 0
 	end
 end
 
@@ -1157,22 +1446,33 @@ function performcombo8()
 	if ts.target ~= nil then 
 	local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
-		if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end
+		if VeigarConfig.combo.forcestun then if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end end
 		CastSpell(DFG, targ)
+		if VeigarConfig.combo.tryq then
+		UseSpell(_R, targ)
+		UseSpell(_Q, targ)
+		else
 		UseSpell(_Q, targ)
 		UseSpell(_R, targ)
-		
+		end
+		int4 = 0
 	end
 end
 
 function performcombo9()
 	if ts.target ~= nil then 
 		targ = ts.target
-		if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end
+		if VeigarConfig.combo.forcestun then if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end end
+		if VeigarConfig.combo.tryq then
+		UseSpell(_R, targ)
+		UseSpell(ignite, targ)
+		UseSpell(_Q, targ)
+		else
 		UseSpell(_Q, targ)
 		UseSpell(_R, targ)
 		UseSpell(ignite, targ)
-		
+		end
+		int4 = 0
 	end
 end
 
@@ -1182,10 +1482,16 @@ function performcombo10()
 		targ = ts.target
 		if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end
 		CastSpell(DFG, targ)
+		if VeigarConfig.combo.tryq then
+		UseSpell(_R, targ)
+		UseSpell(ignite, targ)
+		UseSpell(_Q, targ)
+		else
 		UseSpell(_Q, targ)
 		UseSpell(_R, targ)
 		UseSpell(ignite, targ)
-		
+		end
+		int4 = 0
 	end
 end
 
@@ -1193,10 +1499,16 @@ function performcombo11()
 	if ts.target ~= nil then 
 		targ = ts.target
 		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
-		
-		UseSpell(_Q, targ)
-		UseSpell(_R, targ)
-		
+			if W ~= 1 then
+			if VeigarConfig.combo.tryq then
+			UseSpell(_R, targ)
+			UseSpell(_Q, targ)
+			else
+			UseSpell(_Q, targ)
+			UseSpell(_R, targ)
+			end
+		end
+		int4 = 0
 	end
 end
 
@@ -1205,11 +1517,17 @@ function performcombo12()
 	local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
 		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
-		CastSpell(DFG, targ)
-		
-		UseSpell(_Q, targ)
-		UseSpell(_R, targ)
-		
+			if W ~= 1 then
+			CastSpell(DFG, targ)
+			if VeigarConfig.combo.tryq then
+			UseSpell(_R, targ)
+			UseSpell(_Q, targ)
+			else
+			UseSpell(_Q, targ)
+			UseSpell(_R, targ)
+			end
+		end
+		int4 = 0
 	end
 end
 
@@ -1217,11 +1535,18 @@ function performcombo13()
 	if ts.target ~= nil then 
 		targ = ts.target
 		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
-		
-		UseSpell(_Q, targ)
-		UseSpell(_R, targ)
-		UseSpell(ignite, targ)
-		
+			if W ~= 1 then
+			if VeigarConfig.combo.tryq then
+			UseSpell(_R, targ)
+			UseSpell(ignite, targ)
+			UseSpell(_Q, targ)
+			else
+			UseSpell(_Q, targ)
+			UseSpell(_R, targ)
+			UseSpell(ignite, targ)
+			end
+		end
+		int4 = 0
 	end
 end
 
@@ -1230,23 +1555,74 @@ function performcombo14()
 	local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
 		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
-		CastSpell(DFG, targ)
-		
-		UseSpell(_Q, targ)
-		UseSpell(_R, targ)
-		UseSpell(ignite, targ)
-		
+			if W ~= 1 then
+			CastSpell(DFG, targ)
+			if VeigarConfig.combo.tryq then
+			UseSpell(_R, targ)
+			UseSpell(ignite, targ)
+			UseSpell(_Q, targ)
+			else
+			UseSpell(_Q, targ)
+			UseSpell(_R, targ)
+			UseSpell(ignite, targ)
+			end
+		end
+		int4 = 0
 	end
 end
 
 function performcombo15()
 	if ts.target ~= nil then 
 		targ = ts.target
-		--if VeigarConfig.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end
+		if VeigarConfig.combo.forcestun then if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end end
 		UseSpell(_Q, targ)
-		
+		int4 = 0
 	end
 end
+
+function performcombo16()
+	if ts.target ~= nil then 
+		targ = ts.target
+		if VeigarConfig.combo.forcestun then if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end end
+		UseSpell(_R, targ)
+		int4 = 0
+	end
+end
+
+function performcombo17()
+	if ts.target ~= nil then 
+		targ = ts.target
+		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
+			if targ.canMove ~= true then
+			UseSpell(_W, targ)
+			end
+	int4 = 0
+	end
+end
+
+function performcombo18()
+	if ts.target ~= nil then 
+		local DFG = GetInventorySlotItem(3128)
+		targ = ts.target
+		if VeigarConfig.combo.stunv == 1 then useStunCombo(targ) else UseStunV2() if targ.canMove ~= true then UseSpell(_W, targ) end end
+			if targ.canMove ~= true then
+			CastSpell(DFG, targ)
+			UseSpell(_W, targ)
+			end
+	int4 = 0
+	end
+end
+
+function performcombo19()
+	if ts.target ~= nil then 
+		local DFG = GetInventorySlotItem(3128)
+		targ = ts.target
+		if VeigarConfig.combo.forcestun then if VeigarConfig.combo.stunv == 1 then useStun(targ) else UseStunV2() end end
+		UseSpell(ignite, targ)
+	int4 = 0
+	end
+end
+
 
 function AutoLevel()
 	if VeigarConfig.other.lvlup == 1 then
@@ -1301,30 +1677,6 @@ function findClosestEnemy()
 	return closestEnemy
 end
 
---[[function OnWndMsg(msg, key)
-
-	if VeigarConfig.Stun then
-		local lowest = nil
-		local lowPos = nil
-
-		for i=0, heroManager.iCount, 1 do
-			local enemy = heroManager:GetHero(i)
-			local position = CagePosition(player, enemy, true)
-
-			if position ~= nil then
-				lowPos = position
-				lowest = enemy
-			end
-		end
-
-		if lowest ~= nil and player:CanUseSpell(_E) == READY then
-			CastSpell(_E, lowPos.x, lowPos.z)
-		end
-
-	end
-
-end
-]]
 function UseStunV2()
 		local lowest = nil
 		local lowPos = nil
@@ -1434,10 +1786,37 @@ function Checks()
 	if VeigarConfig.farm.farmm == 1 then SetMode = SCRIPT_PARAM_ONKEYTOGGLE else SetMode = SCRIPT_PARAM_ONKEYDOWN end
 	VeigarConfig.farm._param[1].pType = SetMode
 	if VeigarConfig.farm.farmmm == 1 then SetMode1 = SCRIPT_PARAM_ONKEYTOGGLE else SetMode1 = SCRIPT_PARAM_ONKEYDOWN end
-	VeigarConfig.farm._param[2].pType = SetMode
+	VeigarConfig.farm._param[2].pType = SetMode1
 	--Zhonya&Wooglet check--
 	znaReady = (zhonya ~= nil and myHero:CanUseSpell(zhonya) == READY)
 	wgtReady = (wooglet ~= nil and myHero:CanUseSpell(wooglet) == READY)
+	--COMBO CHECKS--
+	if VeigarConfig.combo.spacebarActive and ValidTarget(ts.target) then
+		performSmartCombo()
+		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa() end
+	end
+	
+	if VeigarConfig.combo.wasteall and ValidTarget(ts.target) then
+		performWasteCombo()
+		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa() end
+	end
+	
+	if VeigarConfig.combo.lightcombo and ValidTarget(ts.target) then
+		performLightCombo()
+		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa() end
+	end
+	
+	for i, enemy in ipairs(GetEnemyHeroes()) do
+		expos = enemy.pos
+	end
+	--SLOT CHECKS--
+	hppot = GetInventorySlotItem(2003)
+	mppot = GetInventorySlotItem(2004)
+	elixir = GetInventorySlotItem(2037)
+	flaskk = GetInventorySlotItem(2041)
+	Biscuit = GetInventorySlotItem(2010)
+	zhonya = GetInventorySlotItem(3157)
+	wooglet = GetInventorySlotItem(3090)
 end
 
 function GetNMinionsHit(Pos, radius)
@@ -1449,4 +1828,3 @@ function GetNMinionsHit(Pos, radius)
 	end
 	return count
 end
-
