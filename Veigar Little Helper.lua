@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 1.9.1
+local version = 1.9
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -244,7 +244,7 @@ function OnLoad()
 		--VeigarConfig.other:addParam("autoW", "Auto W Stunned Enemies", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("Death", "Show Info After Death", SCRIPT_PARAM_ONOFF, false)
 	
-	VeigarConfig:addParam("info",">> [CUT ALL]Version "..version.."",SCRIPT_PARAM_INFO,"")
+	VeigarConfig:addParam("info",">> Version "..version.."",SCRIPT_PARAM_INFO,"")
 	
 	--VeigarConfig.combo:permaShow("spacebarActive")
 	--VeigarConfig.combo:permaShow("wasteall")
