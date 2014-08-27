@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 1.9
+local version = 1.9.1
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -123,12 +123,12 @@ function OnTick()
 	AutoBuyy()
 	autoFarm()
 	ManaCosts()
-	AutoWharrasQ()
-	EWandCage()
+	--AutoWharrasQ()
+	--EWandCage()
 	Potions()
 	AutoLevel()
-	LifeSaver()
-	interrupt()
+	--LifeSaver()
+	--interrupt()
 end
 
 function OnDraw()
@@ -152,6 +152,9 @@ function OnLoad()
 	VeigarConfig = scriptConfig("Little Veigar Helper", "littlehelper")
 	
 	VeigarConfig:addSubMenu("Combo","combo")
+	--VeigarConfig.combo:addParam("ShowCombo", "Show current spacebar combo(target)", SCRIPT_PARAM_ONOFF, false)
+	VeigarConfig.combo:addParam("ShowMana", "Show Time for full combo mana regen", SCRIPT_PARAM_ONOFF, true)
+	--[[
 			VeigarConfig.combo:addSubMenu("Auto R/Q/IGN Killable","autokillf")
 			VeigarConfig.combo.autokillf:addParam("autokill", "Auto ULT/Q/IGN killable", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.combo.autokillf:addParam("user", "Use R", SCRIPT_PARAM_ONOFF, false)
@@ -165,8 +168,8 @@ function OnLoad()
 			VeigarConfig.combo:addParam("forcestun", "Always cast E(even for Q+R kill)", SCRIPT_PARAM_ONOFF, false)	
 			VeigarConfig.combo:addParam("savedfg", "Only use DFG in biggest combos", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("stuntt", "Stun Enemies attacked by turret", SCRIPT_PARAM_ONOFF, true)
-			VeigarConfig.combo:addParam("ShowMana", "Show Time for full combo mana regen", SCRIPT_PARAM_ONOFF, true)
-			VeigarConfig.combo:addParam("ShowCombo", "Show current spacebar combo(target)", SCRIPT_PARAM_ONOFF, false)
+			
+			
 			VeigarConfig.combo:addParam("tryq", "Always try to lasthit enemy with Q", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("forceaa", "AA after combo(RECOMMENDED)", SCRIPT_PARAM_ONOFF, true)	
 		VeigarConfig.combo:addParam("table","------------------Combos--------------",SCRIPT_PARAM_INFO,"")
@@ -174,7 +177,7 @@ function OnLoad()
 			VeigarConfig.combo:addParam("wasteall", "Cast everything in target", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
 			VeigarConfig.combo:addParam("spacebarActive", "SpaceToWin(SmartCombo)", SCRIPT_PARAM_ONKEYDOWN, false, spaceHK)
 			VeigarConfig.combo:addParam("cageTeamActive", "Cage Team", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
-	
+	]]
 	VeigarConfig:addSubMenu("Drawing","draw")
 	
 		VeigarConfig.draw:addParam("table","------------------MyHero Related--------------",SCRIPT_PARAM_INFO,"")
@@ -184,12 +187,12 @@ function OnLoad()
 			VeigarConfig.draw:addParam("AArange", "Draw AA range", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.draw:addParam("XPrange", "Draw XP range", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.draw:addParam("drawKillableMinions", "Draw Circle around killable minions", SCRIPT_PARAM_ONOFF, true)
-			VeigarConfig.draw:addParam("LifeSaverRange", "Draw LifeSaver range", SCRIPT_PARAM_ONOFF, false)
+			--VeigarConfig.draw:addParam("LifeSaverRange", "Draw LifeSaver range", SCRIPT_PARAM_ONOFF, false)
 				
 		VeigarConfig.draw:addParam("table1","------------------Enemies Related-------------",SCRIPT_PARAM_INFO,"")
 		
-			VeigarConfig.draw:addParam("targg", "Mark Target with circle", SCRIPT_PARAM_ONOFF, true)
-			VeigarConfig.draw:addParam("targ", "Draw line to Target(for team fights)", SCRIPT_PARAM_ONOFF, false)
+			--VeigarConfig.draw:addParam("targg", "Mark Target with circle", SCRIPT_PARAM_ONOFF, true)
+			--VeigarConfig.draw:addParam("targ", "Draw line to Target(for team fights)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.draw:addParam("ExtraInfo", "Draw best combo for kill", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.draw:addParam("MainCalc", "Draw Extra/Needed damage", SCRIPT_PARAM_ONOFF, true)
 	
@@ -205,14 +208,14 @@ function OnLoad()
 		VeigarConfig.farm:addParam("orbw", "Move To Mouse when farming",  SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.farm:addParam("farmm", "Select Q farming way preference", SCRIPT_PARAM_LIST, 1, { "Turn ON/OFF", "Hold and farm"})
 		VeigarConfig.farm:addParam("farmmm", "Select W farming way preference", SCRIPT_PARAM_LIST, 2, { "Turn ON/OFF", "Hold and farm"})
-		
+	--[[	
 	VeigarConfig:addSubMenu("Harras","harras")
 		VeigarConfig.harras:addParam("Qharras", "Harras enemy in range with Q", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("V"))
 		VeigarConfig.harras:addParam("manasaveQP", "Mana % to conserve", SCRIPT_PARAM_SLICE, 1, 1, 100, 0)
 		VeigarConfig.harras:addParam("manasaveQ", "Conserve mana during harras", SCRIPT_PARAM_ONOFF,false)
 		VeigarConfig.harras:addParam("eCastActive", "Use E+W", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("E"))
 		VeigarConfig.harras:addParam("addq", "use Q in E+W Combo", SCRIPT_PARAM_ONOFF, false)
-
+]]
 	VeigarConfig:addSubMenu("Auto Potions","AP")
 		VeigarConfig.AP:addParam("pots", "Use autopotions", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.AP:addParam("hp", "Use potions when HP < %", SCRIPT_PARAM_SLICE, 60, 1, 100, 0)
@@ -220,32 +223,32 @@ function OnLoad()
 		VeigarConfig.AP:addParam("elixir", "Auto Elixir of Fortitude when  < %", SCRIPT_PARAM_SLICE, 0, 1, 100, 0)		
 	
 	VeigarConfig:addSubMenu("Life Saver","LifeSaver")
-		VeigarConfig.LifeSaver:addParam("LifeSaver", "Stun enemies Who come too close", SCRIPT_PARAM_ONOFF, false)
-		VeigarConfig.LifeSaver:addParam("LifeSaverRange","Range of LifeSaver", SCRIPT_PARAM_SLICE, 400, 1, 800, 0)
-		VeigarConfig.LifeSaver:addParam("usew", "Use W on emeies caught in LifeSaver", SCRIPT_PARAM_ONOFF, false)
+		--VeigarConfig.LifeSaver:addParam("LifeSaver", "Stun enemies Who come too close", SCRIPT_PARAM_ONOFF, false)
+		--VeigarConfig.LifeSaver:addParam("LifeSaverRange","Range of LifeSaver", SCRIPT_PARAM_SLICE, 400, 1, 800, 0)
+	--	VeigarConfig.LifeSaver:addParam("usew", "Use W on emeies caught in LifeSaver", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver:addParam("zwsave", "Auto activate Zhonyas/Wooglets", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver:addParam("zwhealth", "Min Health % for Zhonyas/Wooglets", SCRIPT_PARAM_SLICE, 15, 0, 100, -1)
 		VeigarConfig.LifeSaver:addParam("antign", "Auto Pots when ignited/morde R", SCRIPT_PARAM_ONOFF, true)
-	
+	--[[
 	VeigarConfig:addSubMenu("Auto-Interrupt", "AutoInterrupt")
         for i, spell in ipairs(spells) do
 			VeigarConfig.AutoInterrupt:addParam(spell.name, spell.menuname, SCRIPT_PARAM_ONOFF, true)
         end
-	
+	]]
 	--VeigarConfig:addSubMenu("","")
 
 	VeigarConfig:addSubMenu("Other","other")
 		VeigarConfig.other:addParam("AutoBuy", "Buy Starting Items", SCRIPT_PARAM_ONKEYDOWN, false, AutoBuy)
 		VeigarConfig.other:addParam("Autolvl", "Auto level up skills", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("lvlup", "Select skill sequence", SCRIPT_PARAM_LIST, 1, { "Q>W>E", "W>Q>E", "W>E>Q" })
-		VeigarConfig.other:addParam("autoW", "Auto W Stunned Enemies", SCRIPT_PARAM_ONOFF, false)
+		--VeigarConfig.other:addParam("autoW", "Auto W Stunned Enemies", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("Death", "Show Info After Death", SCRIPT_PARAM_ONOFF, false)
 	
-	VeigarConfig:addParam("info",">> Version "..version.."",SCRIPT_PARAM_INFO,"")
+	VeigarConfig:addParam("info",">> [CUT ALL]Version "..version.."",SCRIPT_PARAM_INFO,"")
 	
-	VeigarConfig.combo:permaShow("spacebarActive")
-	VeigarConfig.combo:permaShow("wasteall")
-	VeigarConfig.combo:permaShow("lightcombo")
+	--VeigarConfig.combo:permaShow("spacebarActive")
+	--VeigarConfig.combo:permaShow("wasteall")
+	--VeigarConfig.combo:permaShow("lightcombo")
 	VeigarConfig.farm:permaShow("autoFarm")
 	
 	VP = VPrediction(true)
@@ -360,7 +363,7 @@ function ExtraInformation()
 				local Rdmgi = Rdmg * 1.2
 					
 				if DFGI ~= 0 then DFGdmg = getDmg("DFG", enemy ,myHero) end
-				
+				--[[
 				if VeigarConfig.combo.autokillf.autokill and not VeigarConfig.combo.spacebaractive then
 					if (enemy.health < Qdmg and Q ~= 0 and GetDistance(enemy) < qrange and VeigarConfig.combo.autokillf.useq) then
 						UseSpell(_Q, enemy)
@@ -460,7 +463,7 @@ function ExtraInformation()
 						end
 					end
 				end
-				
+				]]
 				if (enemy.health < (Qdmg + AAdmg) and Q ~= 0 ) then																																					--Q
 					DrawText3D(("Q"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true) 
 					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																													--DFG Q
@@ -508,7 +511,6 @@ function autoFarm()
 
 	local usedQ = false
 	if VeigarConfig.farm.autoFarm and GetTickCount() > lastFarmCheck + farmCheckTick then
-		if not VeigarConfig.combo.spacebarActive and not VeigarConfig.harras.eCastActive and not VeigarConfig.harras.Qharras and not VeigarConfig.combo.cageTeamActive and not VeigarConfig.combo.wasteall and not VeigarConfig.combo.lightcombo then
 			if (VeigarConfig.farm.manasave and manaPct() > VeigarConfig.farm.manasavep) or not VeigarConfig.farm.manasave then
 				if myHero.mana > ComboManaCost({_Q, _E}) or not VeigarConfig.farm.SaveE then
 				if VeigarConfig.farm.orbw then moveToMouse() end
@@ -529,7 +531,6 @@ function autoFarm()
 					lastFarmCheck = GetTickCount()
 				end
 			end
-		end
 	end
 	
 	if VeigarConfig.farm.EnabledW then
@@ -630,7 +631,7 @@ function Drawing()
 	if VeigarConfig.draw.XPrange then
 		CustomDrawCircle(player.x, player.y, player.z, xprange, qCircleColor)
 	end
-	
+	--[[
 	if VeigarConfig.draw.LifeSaverRange then
 		CustomDrawCircle(player.x, player.y, player.z, VeigarConfig.LifeSaver.LifeSaverRange, wCircleColor)
 	end
@@ -644,7 +645,7 @@ function Drawing()
 	targ = ts.target    
 		DrawLine3D(myHero.x, myHero.y, myHero.z, targ.x, targ.y, targ.z, 5, ARGB(250,235,33,33))
     end
-	
+	]]
 	if VeigarConfig.draw.drawKillableMinions then
       enemyMinions:update()
       if enemyMinions.objects[1] then
@@ -657,7 +658,7 @@ function Drawing()
         end
       end
     end
-	
+	--[[
 	if int5 ~= 0 and ts.target ~= nil and VeigarConfig.combo.ShowCombo then
 	targ = ts.target
 		if int5 == 1 then
@@ -700,6 +701,7 @@ function Drawing()
 			DrawText3D(("unkillable"), targ.x, targ.y + 240, targ.z, 20, RGB(255, 255, 255), true)
 		end
 	end
+	]]
 end
 
 function useStunCombo(object)
@@ -1791,6 +1793,7 @@ function Checks()
 	znaReady = (zhonya ~= nil and myHero:CanUseSpell(zhonya) == READY)
 	wgtReady = (wooglet ~= nil and myHero:CanUseSpell(wooglet) == READY)
 	--COMBO CHECKS--
+	--[[
 	if VeigarConfig.combo.spacebarActive and ValidTarget(ts.target) then
 		performSmartCombo()
 		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa() end
@@ -1809,6 +1812,7 @@ function Checks()
 	for i, enemy in ipairs(GetEnemyHeroes()) do
 		expos = enemy.pos
 	end
+	]]
 	--SLOT CHECKS--
 	hppot = GetInventorySlotItem(2003)
 	mppot = GetInventorySlotItem(2004)
