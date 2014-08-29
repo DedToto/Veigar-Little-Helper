@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 1.93
+local version = 1.94
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -184,7 +184,7 @@ function OnLoad()
 			VeigarConfig.draw:addParam("AArange", "Draw AA range", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.draw:addParam("XPrange", "Draw XP range", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.draw:addParam("drawKillableMinions", "Draw Circle around killable minions", SCRIPT_PARAM_ONOFF, true)
-			VeigarConfig.draw:addParam("LifeSaverRange", "Draw LifeSaver range", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.draw:addParam("LifeSaverRange", "Draw LifeSaver range", SCRIPT_PARAM_ONOFF, true)
 				
 		VeigarConfig.draw:addParam("table1","------------------Enemies Related-------------",SCRIPT_PARAM_INFO,"")
 		
@@ -631,7 +631,7 @@ function Drawing()
 		CustomDrawCircle(player.x, player.y, player.z, xprange, qCircleColor)
 	end
 	
-	if VeigarConfig.draw.LifeSaverRange then
+	if VeigarConfig.draw.LifeSaverRange and VeigarConfig.LifeSaver.LifeSaver then
 		CustomDrawCircle(player.x, player.y, player.z, VeigarConfig.LifeSaver.LifeSaverRange, wCircleColor)
 	end
 	
@@ -924,9 +924,9 @@ local DownloadSourceLib = false
 end
 
 function IgniteCheck()
-	if myHero:GetSpellData(SUMMONER_1).name:find("SummonerDot") then
+	if myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") then
         ignite = SUMMONER_1
-    elseif myHero:GetSpellData(SUMMONER_2).name:find("SummonerDot") then
+    elseif myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") then
         ignite = SUMMONER_2
     end
 end
