@@ -1706,7 +1706,7 @@ function LifeSaver()
 	if VeigarConfig.LifeSaver.LifeSaver then
 	local closestEnemy = findClosestEnemy()
 		if closestEnemy ~= nil and CanUseSpell(_E) == READY and not myHero.dead and GetDistance(closestEnemy) < VeigarConfig.LifeSaver.LifeSaverRange then
-			UseSpell(_E,losestEnemy)
+			UseSpell(_E,closestEnemy)
 		end
 	end
 end
