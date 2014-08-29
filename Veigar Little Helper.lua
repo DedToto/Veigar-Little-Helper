@@ -913,7 +913,7 @@ function UseSpell(Spell,target)
 		if VeigarConfig.combo.packet then
 			Packet("S_CAST", {spellId = Spell, targetNetworkId = target.networkID}):send()
 		else
-			CastSpell(Spell, target)
+			CastSpell(DFG, ts.target)
 		end
 	elseif Spell == ignite then
 		if VeigarConfig.combo.packet then
