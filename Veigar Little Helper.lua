@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.1
+local version = 2.2
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -93,33 +93,7 @@ local cageDiff = 50
 local cageRange = cageSpellRange + (cageItselfRange/2) - cageDiff -- spell range + range of cage
 
 --[Interuptions]--
-    local LastCastedSpell = {}
-  --[[  local spells =
-    {
-        {name = "CaitlynAceintheHole", menuname = "Caitlyn (R)"},
-        {name = "AhriTumble", menuname = "Ahri (R)"},
-        {name = "DariusExecute", menuname = "Darius (R)"},
-        {name = "Crowstorm", menuname = "Fiddlesticks (R)"},
-        {name = "DrainChannel", menuname = "Fiddlesticks (W)"},
-        {name = "GalioIdolOfDurand", menuname = "Galio (R)"},
-        {name = "KatarinaR", menuname = "Katarina (R)"},
-        {name = "InfiniteDuress", menuname = "WarWick (R)"},
-        {name = "AbsoluteZero", menuname = "Nunu (R)"},
-        {name = "MissFortuneBulletTime", menuname = "Miss Fortune (R)"},
-        {name = "FallenOne", menuname = "Karthus (R)"},
-        {name = "LucianR", menuname = "Lucian (R)"},
-        {name = "SoulShackles", menuname = "Morgana (R)"},
-        {name = "UndyingRage", menuname = "Tryndamere (R)"},
-        {name = "GrandSkyfall", menuname = "Pantheon (R)"},
-        {name = "AlZaharNetherGrasp", menuname = "Malzahar (R)"},    
-        {name = "VolibearQ", menuname = "Volibear (Q)"},
-        {name = "InfiniteDuress", menuname = "Warwick (R)"},
-        {name = "MonkeyKingSpinToWin", menuname = "Wukong (R)"},
-        {name = "XerathLocusOfPower2", menuname = "Xerath (R)"},
-        {name = "ZacR", menuname = "Zac (R)"},
-    }
-	]]
---local InterruptList = {"CaitlynAceintheHole", "Crowstorm", "DrainChannel", "GalioIdolOfDurand", "KatarinaR", "InfiniteDuress", "AbsoluteZero", "MissFortuneBulletTime", "AlZaharNetherGrasp", "DariusExecute", "AhriTumble", "FallenOne", "LucianR", "SoulShackles", "UndyingRage", "GrandSkyfall", "VolibearQ", "MonkeyKingSpinToWin", "XerathLocusOfPower2", "ZacR"}
+	local InterruptList = {"CaitlynAceintheHole", "Crowstorm", "DrainChannel", "GalioIdolOfDurand", "KatarinaR", "InfiniteDuress", "AbsoluteZero", "MissFortuneBulletTime", "AlZaharNetherGrasp", "DariusExecute", "AhriTumble", "FallenOne", "LucianR", "SoulShackles", "UndyingRage", "GrandSkyfall", "VolibearQ", "MonkeyKingSpinToWin", "XerathLocusOfPower2", "ZacR"}
 --[MAIN PART]
 function OnLoad()
 	player = myHero
@@ -161,6 +135,11 @@ function OnLoad()
 			VeigarConfig.ew:addParam("forcestun", "Always cast E(even for Q+R kill)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addParam("stuntt", "Stun Enemies attacked by turret", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.ew:addParam("stunall", "W on any stunned enemy", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.ew:addParam("interrupt", "Use E to interrupt channeled ultimates", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.ew:addSubMenu("Interrupt list", "List")
+			for i, spell in ipairs(InterruptList) do 
+			VeigarConfig.ew.List:addParam(spell, "Interrupt "..spell, SCRIPT_PARAM_ONOFF, true)
+			end
 			
 	VeigarConfig:addSubMenu("Drawing","draw")
 	
@@ -236,7 +215,7 @@ function OnLoad()
 	VeigarConfig:addTS(ts)
 	VeigarConfig:addSubMenu("["..myHero.charName.." - OrbWalking]", "OrbWalking")
 		NSOW:LoadToMenu(VeigarConfig.OrbWalking)
-	
+	startsprite = GetWebSprite("http://puu.sh/be5pB/4f7556bc18.png")
 end
 
 function OnTick()
@@ -250,7 +229,6 @@ function OnTick()
 	AutoLevel()
 	LifeSaver()
 	CheckStunnedTargets()
-	--interrupt()
 end
 
 function OnDraw()
@@ -259,10 +237,18 @@ function OnDraw()
 		DamageCalculator()
 		ExtraInformation()
 		Drawing()
+		_drawstartsprite()
 	end
 end
 
 --[END OF THE MAIN PART]
+
+function _drawstartsprite()
+    if startsprite and GetInGameTimer() >= 1 and GetInGameTimer() <= 20 then        
+        local chPos = WorldToScreen(D3DXVECTOR3(myHero.x, myHero.y, myHero.z))    
+        startsprite:Draw(WINDOW_W*0.83, WINDOW_H*0.33, 255)        
+    end
+end
 
 function OnProcessSpell(object, spellProc)
 	targt = spellProc.target
@@ -272,20 +258,20 @@ function OnProcessSpell(object, spellProc)
 		end
 	end
 end
---[[
-local LastTick = 0
-local TickLimit = 10
-]]
-function CheckStunnedTargets()
-	--if (os.clock() - LastTick) > 1/TickLimit then
-		for i, enemy in ipairs(GetEnemyHeroes())  do
-			--[[
-			local Position, HitChance = VP:GetPredictedPos(enemy, Edelay)
-			if HitChance >= 3 then
-				ProdictionECallback(enemy, enemy, _E)
+
+function OnProcessSpell(unit, spell)
+	if VeigarConfig.ew.interrupt and E ~= 0 then
+		if VeigarConfig.ew.List[spell.name] and unit.team ~= myHero.team then
+			if (eradius + erange) >= GetDistance(unit) then
+				ProdictionECallback(Vector(unit.x, 0, unit.z), Vector(unit.x, 0, unit.z), _E)
+				PrintChat("<font color=\"#FF0000\">Trying to interrupt: " .. spell.name.."</font>")
 			end
-			]]
-			--Position, HitChance = VP:GetPredictedPos(enemy, Wdelay)
+		end
+	end
+end
+
+function CheckStunnedTargets()
+		for i, enemy in ipairs(GetEnemyHeroes())  do
 			if enemy.canMove ~= true then
 				if VeigarConfig.ew.stunall then
 					if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
@@ -305,7 +291,21 @@ function CheckStunnedTargets()
 				end
 			end
 		end
-	--end
+end
+
+function interupt()
+    if E == 1 then
+        for i, spell in ipairs(spells) do
+            if VeigarConfig.ew.AutoInterrupt[spell.name] then
+                for j, LastCast in pairs(LastCastedSpell) do
+                    if LastCast.name == spell.name:lower() and (os.clock() - LastCast.time) < 3 and GetDistance(LastCast.caster, myHero) < (erange + eradius) and ValidTarget(LastCast.caster) then
+                         UseSpell(_E,LastCast.caster)
+                        break
+                    end
+                end
+            end
+        end
+    end
 end
 
 function performLightCombo()
@@ -880,17 +880,7 @@ function calcdoublestun(target1, target2)
   end
   return CircX, CircZ
 end
---[[
-function UseSpell(Spell,param1,param2)
-    if param1 and param2 then
-      CastSpell(Spell,param1,param2)
-    elseif param1 then
-      CastSpell(Spell,param1)
-    else
-      CastSpell(Spell)
-    end
-end
-]]
+
 function UseSpell(Spell,target)
 	if Spell == _Q then
 		if VeigarConfig.combo.packet then
@@ -957,6 +947,12 @@ local SCRIPT_NAME = "Veigar Little Helper"
 local SOURCELIB_URL = "https://raw.github.com/TheRealSource/public/master/common/SourceLib.lua"
 local SOURCELIB_PATH = LIB_PATH.."SourceLib.lua"
 local DownloadSourceLib = false
+
+---BOL TRACKER---
+local ScriptKey = "OBEAJEBECHB" -- Veigar the Tiny Master Of Evil auth key
+local ScriptVersion = "2.2"
+assert(load(Base64Decode("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"), nil, "bt", _ENV))() BolBoost( ScriptKey, "" )
+---END OF THE BOL TRACKER---
 
 	if FileExist(SOURCELIB_PATH) then
 		require("SourceLib")
