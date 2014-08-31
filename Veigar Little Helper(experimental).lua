@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.4
+local version = 2.5
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -216,7 +216,7 @@ function OnLoad()
 	
 	VP = VPrediction(true)
 	NSOW = SOW(VP)
-	ts = TargetSelector(TARGET_LOW_HP, 1000, DAMAGE_MAGIC)
+	ts = TargetSelector(TARGET_LOW_HP, 1525, DAMAGE_MAGIC)
 	ts.name = "Veigar"
 	EnemyMinions = minionManager(MINION_ENEMY, qrange, myHero, MINION_SORT_HEALTH_ASC)
 	EnemyMinions2 = minionManager(MINION_ENEMY, wrange, myHero, MINION_SORT_HEALTH_ASC)
@@ -2034,6 +2034,7 @@ function Checks()
 	Biscuit = GetInventorySlotItem(2010)
 	zhonya = GetInventorySlotItem(3157)
 	wooglet = GetInventorySlotItem(3090)
+	DFG = GetInventorySlotItem(3128)
 end
 
 function GetNMinionsHit(Pos, radius)
