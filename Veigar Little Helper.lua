@@ -127,6 +127,7 @@ function OnLoad()
 			VeigarConfig.combo:addParam("ShowCombo", "Show current spacebar combo(target)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("tryq", "Always try to lasthit enemy with Q", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("forceaa", "AA after combo(RECOMMENDED)", SCRIPT_PARAM_ONOFF, true)	
+			VeigarConfig.combo:addParam("newts", "Left Click LOCK Target", SCRIPT_PARAM_ONOFF, true)	
 		VeigarConfig.combo:addParam("table","------------------Combos--------------",SCRIPT_PARAM_INFO,"")
 			VeigarConfig.combo:addParam("lightcombo", "Light Combo E+W+Q", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
 			VeigarConfig.combo:addParam("wasteall", "Cast everything in target", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
@@ -269,7 +270,7 @@ end
 --[END OF THE MAIN PART]
 
 function OnWndMsg(Msg, Key)
-	if Msg == WM_LBUTTONDOWN then
+	if Msg == WM_LBUTTONDOWN and VeigarConfig.combo.newts then
 		local minD = 0
 		local starget = nil
 		for i, enemy in ipairs(GetEnemyHeroes()) do
@@ -789,7 +790,7 @@ function Drawing()
 		DrawLine3D(myHero.x, myHero.y, myHero.z, targ.x, targ.y, targ.z, 5, ARGB(250,235,33,33))
     end
 	
-	if VeigarConfig.draw.starget then
+	if VeigarConfig.draw.starget and VeigarConfig.combo.newts then
 		for i=1, heroManager.iCount do
 			local enemy = heroManager:GetHero(i)
 			if ValidTarget(enemy) and focusedtarget ~= nil and (enemy.charName == focusedtarget.charName)  then
