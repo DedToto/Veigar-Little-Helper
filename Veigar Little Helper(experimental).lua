@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.54
+local version = 2.55
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -20,6 +20,7 @@ local wgtReady = 0
 local expos
 local prodstatus = false
 local lastSkin = 0
+local ctarget = nil
 
 --[KEYS]--
 local autoFarmKey = string.byte("J")
@@ -972,7 +973,7 @@ function UseSpell(Spell,target)
 		--Only on stunned
 	
 	elseif Spell == _E then
-		if VeigarConfig.ew.stunv == 1 then useStun(target) elseif VeigarConfig.ew.stunv == 2 then UseStunV2() elseif VeigarConfig.ew.stunv == 3 then UseStunV3() end
+		if VeigarConfig.ew.stunv == 1 then useStun(ctarget) elseif VeigarConfig.ew.stunv == 2 then UseStunV2() elseif VeigarConfig.ew.stunv == 3 then UseStunV3() end
 	elseif Spell == _R then
 		if VeigarConfig.combo.packet then
 			Packet("S_CAST", {spellId = Spell, targetNetworkId = target.networkID}):send()
@@ -1814,11 +1815,11 @@ function UseStunV2()
 
 		for i=0, heroManager.iCount, 1 do
 			local enemy = heroManager:GetHero(i)
-			local position = CagePosition(player, enemy, true)
+			local position = CagePosition(player, ctarget, true)
 
 			if position ~= nil then
 				lowPos = position
-				lowest = enemy
+				lowest = ctarget
 			end
 		end
 
@@ -1840,7 +1841,7 @@ function UseStunV3()
 			end
 		end
 		if minE ~= nil then
-			UseE(minE)
+			if VeigarConfig.ew.stuncl then UseE(minE) else UseE(ctarget) end
 		end
 end
 
@@ -2018,6 +2019,7 @@ function Checks()
 	znaReady = (zhonya ~= nil and myHero:CanUseSpell(zhonya) == READY)
 	wgtReady = (wooglet ~= nil and myHero:CanUseSpell(wooglet) == READY)
 	--COMBO CHECKS--
+	ctarget = ts.target
 	if VeigarConfig.combo.spacebarActive and ValidTarget(ts.target) then
 		performSmartCombo()
 		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa() end
