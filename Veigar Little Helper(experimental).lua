@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.55
+local version = 2.56
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -57,6 +57,8 @@ local wRange = 900
 local Edelay = 0.2
 local Ewidth = 10
 local Wdelay = 1.25
+local aatrange = nil
+local aatcount = nil
 
 --[MANACOSTS]--
 local QMana = {60, 65, 70, 75, 80}
@@ -118,26 +120,30 @@ function OnLoad()
 			VeigarConfig.combo.autokillf:addParam("useign", "Use IGN", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveab", "Don't waste spells if OverDmg is > than", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveabsl", "OverDamage config ", SCRIPT_PARAM_SLICE, 1, 1, 1000, 0)
+	VeigarConfig.combo:addSubMenu("Movement Settings","moveset")
+				VeigarConfig.combo.moveset:addParam("allturn", "Turn everything ON/OFF", SCRIPT_PARAM_ONOFF, true)
+				VeigarConfig.combo.moveset:addParam("combo1", "Select for SmartCombo", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
+				VeigarConfig.combo.moveset:addParam("combo2", "Select for Light Combo", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
+				VeigarConfig.combo.moveset:addParam("combo3", "Select for WasteAll Combo", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
+				VeigarConfig.combo.moveset:addParam("combo4", "Select for Cage Team", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
+				VeigarConfig.combo.moveset:addParam("combo5", "Select for StunClosest", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
+				VeigarConfig.combo.moveset:addParam("combo6", "Select for E+W", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
+				VeigarConfig.combo.moveset:addParam("combo7", "Select for Q harras", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
 		VeigarConfig.combo:addParam("table","------------------Settings--------------",SCRIPT_PARAM_INFO,"")	
 			if VIP_USER then VeigarConfig.combo:addParam("packet", "Use Packets to Cast Skills", SCRIPT_PARAM_ONOFF, false) end
 			VeigarConfig.combo:addParam("savedfg", "Only use DFG in biggest combos", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("ShowMana", "Show Time for full combo mana regen", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.combo:addParam("ShowCombo", "Show current spacebar combo(target)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("tryq", "Always try to lasthit enemy with Q", SCRIPT_PARAM_ONOFF, false)
-			VeigarConfig.combo:addParam("forceaa", "AA after combo(RECOMMENDED)", SCRIPT_PARAM_ONOFF, true)	
+			VeigarConfig.combo:addParam("forceaa", "AA after combo(RECOMMENDED)", SCRIPT_PARAM_ONOFF, true)
+			--VeigarConfig.combo:addParam("AAtcount", "Don't AA if > x champions around", SCRIPT_PARAM_SLICE, 1, 1, 5, 0)
+			--VeigarConfig.combo:addParam("AAtrange", "Don't AA if > x enemies in range", SCRIPT_PARAM_SLICE, 1500, 5, 1525, 0)
 		VeigarConfig.combo:addParam("table","------------------Combos--------------",SCRIPT_PARAM_INFO,"")
 			VeigarConfig.combo:addParam("lightcombo", "Light Combo E+W+Q", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
 			VeigarConfig.combo:addParam("wasteall", "Cast everything in target", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
 			VeigarConfig.combo:addParam("spacebarActive", "SpaceToWin(SmartCombo)", SCRIPT_PARAM_ONKEYDOWN, false, spaceHK)
 	
 	VeigarConfig:addSubMenu("E and W","ew")
-			--[[VeigarConfig.ew:addSubMenu("Movement Settings","moveset")
-				VeigarConfig.ew.moveset:addParam("combo1", "Select for SmartCombo", SCRIPT_PARAM_LIST, 1, { "Move To Mouse", "OrbWalk", "None"})
-				VeigarConfig.ew.moveset:addParam("combo2", "Select for Light Combo", SCRIPT_PARAM_LIST, 1, { "Move To Mouse", "OrbWalk", "None"})
-				VeigarConfig.ew.moveset:addParam("combo3", "Select for WasteAll Combo", SCRIPT_PARAM_LIST, 1, { "Move To Mouse", "OrbWalk", "None"})
-				VeigarConfig.ew.moveset:addParam("combo4", "Select for Cage Team", SCRIPT_PARAM_LIST, 1, { "Move To Mouse", "OrbWalk", "None"})
-				VeigarConfig.ew.moveset:addParam("combo5", "Select for StunClosest", SCRIPT_PARAM_LIST, 1, { "Move To Mouse", "OrbWalk", "None"})
-]]
 			VeigarConfig.ew:addParam("stunv", "Select E logic", SCRIPT_PARAM_LIST, 1, { "Standart", "Alternative","Alternative 2"})
 			VeigarConfig.ew:addParam("eCastActive", "Use E+W", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("E"))
 			VeigarConfig.ew:addParam("cageTeamActive", "Cage Team", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
@@ -342,7 +348,7 @@ function performLightCombo()
 end
 
 function aa()
-	if VeigarConfig.autoattack and ValidTarget(ts.target) and GetDistance(ts.target) <= aarange then
+	if VeigarConfig.autoattack and ValidTarget(ts.target) and GetDistance(ts.target) <= 1000 then
 		myHero:Attack(ts.target)
 	end
 end
@@ -1485,7 +1491,7 @@ function dmgCalc(drawtarget)
 end
 
 function performcombo1()
-	if ts.target ~= nil then
+	if ts.target ~= nil and GetDistance(ts.target, myHero) <= 650 then
 		targ = ts.target
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 			UseSpell(_Q, targ)
@@ -1494,7 +1500,7 @@ function performcombo1()
 end
 
 function performcombo2()
-	if ts.target ~= nil then
+	if ts.target ~= nil and GetDistance(ts.target, myHero) <= 650 then
 		local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
 			
@@ -1506,7 +1512,7 @@ function performcombo2()
 end
 
 function performcombo3()
-	if ts.target ~= nil then 
+	if ts.target ~= nil and GetDistance(ts.target, myHero) <= 1000 then 
 		targ = ts.target
 			
 		UseSpell(_E,targ)
@@ -1712,7 +1718,7 @@ function performcombo14()
 end
 
 function performcombo15()
-	if ts.target ~= nil then 
+	if ts.target ~= nil and GetDistance(ts.target, myHero) <= 650 then 
 		targ = ts.target
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		UseSpell(_Q, targ)
@@ -1841,7 +1847,7 @@ function UseStunV3()
 			end
 		end
 		if minE ~= nil then
-			if VeigarConfig.ew.stuncl then UseE(minE) else UseE(ctarget) end
+			if VeigarConfig.ew.stuncl and GetDistance(minE, myHero) <= 1000  then UseE(minE) elseif GetDistance(ts.target, myHero) <= 1000 then UseE(ts.target) end
 		end
 end
 
@@ -2020,17 +2026,18 @@ function Checks()
 	wgtReady = (wooglet ~= nil and myHero:CanUseSpell(wooglet) == READY)
 	--COMBO CHECKS--
 	ctarget = ts.target
+	
 	if VeigarConfig.combo.spacebarActive and ValidTarget(ts.target) then
 		performSmartCombo()
-		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa() end
+		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa()  end
 	end
 	
-	if VeigarConfig.combo.wasteall and ValidTarget(ts.target) then
+	if VeigarConfig.combo.wasteall and ValidTarget(ts.target) and GetDistance(ts.target, myHero) <= 1000 then
 		performWasteCombo()
 		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa() end
 	end
 	
-	if VeigarConfig.combo.lightcombo and ValidTarget(ts.target) then
+	if VeigarConfig.combo.lightcombo and ValidTarget(ts.target) and GetDistance(ts.target, myHero) <= 1000 then
 		performLightCombo()
 		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa() end
 	end
@@ -2042,6 +2049,31 @@ function Checks()
 	if VeigarConfig.ew.stuncl then 
 		UseStunV3()
 	end
+	--aatrange = VeigarConfig.combo.AAtrange
+	--aatcount = VeigarConfig.combo.AAtcount
+	
+	if VeigarConfig.combo.spacebarActive then
+	if VeigarConfig.combo.moveset.combo1 == 1 then moveToMouse() end
+	end
+	if VeigarConfig.combo.wasteall then
+	if VeigarConfig.combo.moveset.combo3 == 1 then moveToMouse() end
+	end
+	if VeigarConfig.combo.lightcombo then
+	if VeigarConfig.combo.moveset.combo2 == 1 then moveToMouse() end
+	end
+	if VeigarConfig.ew.stuncl then
+	if VeigarConfig.combo.moveset.combo5 == 1 then moveToMouse() end
+	end
+	if VeigarConfig.ew.cageTeamActive then
+	if VeigarConfig.combo.moveset.combo4 == 1 then moveToMouse() end
+	end
+	if VeigarConfig.harras.Qharras then
+	if VeigarConfig.combo.moveset.combo7 == 1 then moveToMouse() end
+	end
+	if VeigarConfig.ew.eCastActive then
+	if VeigarConfig.combo.moveset.combo6 == 1 then moveToMouse() end
+	end
+	
 	--SLOT CHECKS--
 	hppot = GetInventorySlotItem(2003)
 	mppot = GetInventorySlotItem(2004)
