@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.55
+local version = 2.56
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -11,6 +11,8 @@ local int2 = 0
 local int3 = 0
 local int4 = 0
 local int5 = 0
+local int6 = 0
+local int7 = 0
 local eTarget = nil
 local CT = 1000
 local Comboing = false
@@ -121,7 +123,9 @@ function OnLoad()
 			VeigarConfig.combo.autokillf:addParam("saveab", "Don't waste spells if OverDmg is > than", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveabsl", "OverDamage config ", SCRIPT_PARAM_SLICE, 1, 1, 1000, 0)
 	VeigarConfig.combo:addSubMenu("Movement Settings","moveset")
-				--VeigarConfig.combo.moveset:addParam("allturn", "Turn everything ON/OFF", SCRIPT_PARAM_ONOFF, true)
+				VeigarConfig.combo.moveset:addParam("allturn", "Turn everything ON/OFF", SCRIPT_PARAM_ONOFF, true)
+				VeigarConfig.combo.moveset:addParam("WALKtcount", "Don't Move if > x champions around", SCRIPT_PARAM_SLICE, 3, 1, 5, 0)
+				VeigarConfig.combo.moveset:addParam("WALKtrange", "Don't Move if > x enemies in range", SCRIPT_PARAM_SLICE, 1200, 5, 1525, 0)
 				VeigarConfig.combo.moveset:addParam("combo1", "Select for SmartCombo", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
 				VeigarConfig.combo.moveset:addParam("combo2", "Select for Light Combo", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
 				VeigarConfig.combo.moveset:addParam("combo3", "Select for WasteAll Combo", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
@@ -264,6 +268,7 @@ function OnTick()
 		GenModelPacket("Veigar", VeigarConfig.other.skin1)
 		lastSkin = VeigarConfig.other.skin1
 	end
+	aa()
 end
 
 function OnDraw()
@@ -341,14 +346,16 @@ function interupt()
 end
 
 function performLightCombo()
+int6 = 1
 		targ = ts.target
 		UseSpell(_E, targ)
 		UseSpell(_Q, targ)
-		int4 = 0
+		if Q == 0 then int6 = 0 end
+		--if VeigarConfig.combo.forceaa then aa() end
 end
 
 function aa()
-	if VeigarConfig.autoattack and ValidTarget(ts.target) and GetDistance(ts.target) <= 1000 then
+	if VeigarConfig.autoattack and ValidTarget(ts.target) and GetDistance(ts.target,myHero) <= 1000 then
 		myHero:Attack(ts.target)
 	end
 end
@@ -1136,7 +1143,9 @@ function IsGoodTarget(target, range)
 end
 
 function moveToMouse()
-    myHero:MoveTo(mousePos.x, mousePos.z)
+    --myHero:MoveTo(mousePos.x, mousePos.z)
+	MouseMove = Vector(myHero) + (Vector(mousePos) - Vector(myHero)):normalized() * 300
+	myHero:MoveTo(MouseMove.x, MouseMove.z)
 end
 
 function ManaCost(Spell)
@@ -1228,6 +1237,7 @@ function Potions()
 end
 
 function performWasteCombo()
+	int6 = 1
 	targ = ts.target
 	local DFG = GetInventorySlotItem(3128)
 	UseSpell(_E, targ)
@@ -1236,12 +1246,14 @@ function performWasteCombo()
 	if R ~= 0 then UseSpell(_R, targ) end
 	if ignitos ~= 0 then UseSpell(ignite, targ) end
 	if Q ~= 0 then UseSpell(_Q, targ) end
+	if Q == 0 or R == 0 or ignitos == 0 then int6 = 0 end
 	else
 	if Q ~= 0 then UseSpell(_Q, targ) end
 	if R ~= 0 then UseSpell(_R, targ) end
 	if ignitos ~= 0 then UseSpell(ignite, targ) end
+	if Q == 0 or R == 0 or ignitos == 0 then int6 = 0 end
 	end
-	int4 = 0
+	
 end
 
 function performSmartCombo()
@@ -1253,61 +1265,61 @@ function performSmartCombo()
 		aTime[targ.name] = GetTickCount()
 	end
 	if combo == 1 then
-	int4 = 1
+	
 		performcombo1()
 	elseif combo == 2 then
-	int4 = 1
+	
 		performcombo2()
 	elseif combo == 17 then
-	int4 = 1
+	
 		performcombo17()
 	elseif combo == 18 then
-	int4 = 1
+	
 		performcombo18()
 	elseif combo == 19 then
-	int4 = 1
+	
 		performcombo19()
 	elseif combo == 3 then
-	int4 = 1
+	
 		performcombo3()
 	elseif combo == 4 then
-	int4 = 1
+	
 		performcombo4()
 	elseif combo == 5 then
-	int4 = 1
+	
 		performcombo5()
 	elseif combo == 6 then
-	int4 = 1
+	
 		performcombo6()
 	elseif combo == 16 then
-	int4 = 1
+	
 		performcombo16()
 	elseif combo == 7 then
-	int4 = 1
+	
 		performcombo7()
 	elseif combo == 8 then
-	int4 = 1
+	
 		performcombo8()
 	elseif combo == 9 then
-	int4 = 1
+	
 		performcombo9()
 	elseif combo == 10 then
-	int4 = 1
+	
 		performcombo10()
 	elseif combo == 11 then
-	int4 = 1
+	
 		performcombo11()
 	elseif combo == 12 then
-	int4 = 1
+	
 		performcombo12()
 	elseif combo == 13 then
-	int4 = 1
+	
 		performcombo13()
 	elseif combo == 14 then
-	int4 = 1
+	
 		performcombo14()
 	elseif combo == 15 then
-	int4 = 1
+	
 		performcombo15()		
 	end
 end
@@ -1494,9 +1506,12 @@ function performcombo1()
 	if ts.target ~= nil and GetDistance(ts.target, myHero) <= 650 then
 		targ = ts.target
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
+		int6 = 1
 			UseSpell(_Q, targ)
-			int4 = 0
+			--if VeigarConfig.combo.forceaa then aa() end
+		if Q == 0 then int6 = 0 end
 	end
+	
 end
 
 function performcombo2()
@@ -1505,201 +1520,247 @@ function performcombo2()
 		targ = ts.target
 			
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
+		int6 = 1
 			UseSpell(DFG, targ)
 			UseSpell(_Q, targ)
-			int4 = 0
+			--if VeigarConfig.combo.forceaa then aa() end
+		if Q == 0 then int6 = 0 end
 	end
+	
 end
 
 function performcombo3()
 	if ts.target ~= nil and GetDistance(ts.target, myHero) <= 1000 then 
 		targ = ts.target
-			
+		int6 = 1
 		UseSpell(_E,targ)
 			if W ~= 1 then
 			UseSpell(_Q, targ)
+			if Q == 0 then int6 = 0 end
 			end
-			int4 = 0
+			--if VeigarConfig.combo.forceaa then aa() end
+			
 	end
+	
 end
 
 function performcombo4()
 	if ts.target ~= nil then 
 		local DFG = GetInventorySlotItem(3128)
 			targ = ts.target
-			
+		int6 = 1	
 		UseSpell(_E, targ)
 			if W ~= 1 then
 			UseSpell(DFG, targ)
 			UseSpell(_Q, targ)
+			if Q == 0 then int6 = 0 end
 			end
-			int4 = 0
+			--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo5()
 	if ts.target ~= nil then 
 		targ = ts.target
+		int6 = 1
 		UseSpell(_E, targ)
 		if W ~= 1 then
 			if VeigarConfig.combo.tryq then
 			UseSpell(ignite, targ)
 			UseSpell(_Q, targ)
+			if Q == 0 then int6 = 0 end
 			else
 			UseSpell(_Q, targ)
 			UseSpell(ignite, targ)
+			if ignitos == 0 then int6 = 0 end
 			end
 		end
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo6()
 	if ts.target ~= nil then 
 	local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
+		int6 = 1
 		UseSpell(_E, targ)
 			if W ~= 1 then
 			UseSpell(DFG, targ)
 			if VeigarConfig.combo.tryq then
 			UseSpell(ignite, targ)
 			UseSpell(_Q, targ)
+			if Q == 0 then int6 = 0 end
 			else
 			UseSpell(_Q, targ)
 			UseSpell(ignite, targ)
+			if ignitos == 0 then int6 = 0 end
 			end
 		end
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo7()
 	if ts.target ~= nil then 
 		targ = ts.target
+		int6 = 1
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		if VeigarConfig.combo.tryq then
 		UseSpell(_R, targ)
 		UseSpell(_Q, targ)
+		if Q == 0 then int6 = 0 end
 		else
 		UseSpell(_Q, targ)
 		UseSpell(_R, targ)
+		if R == 0 then int6 = 0 end
 		end
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo8()
 	if ts.target ~= nil then 
 	local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
+		int6 = 1
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		UseSpell(DFG, targ)
 		if VeigarConfig.combo.tryq then
 		UseSpell(_R, targ)
 		UseSpell(_Q, targ)
+		if Q == 0 then int6 = 0 end
 		else
 		UseSpell(_Q, targ)
 		UseSpell(_R, targ)
+		if R == 0 then int6 = 0 end
 		end
-		int4 = 0
+
+		--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo9()
 	if ts.target ~= nil then 
 		targ = ts.target
+		int6 = 1
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		if VeigarConfig.combo.tryq then
 		UseSpell(_R, targ)
 		UseSpell(ignite, targ)
 		UseSpell(_Q, targ)
+		if Q == 0 then int6 = 0 end
 		else
 		UseSpell(_Q, targ)
 		UseSpell(_R, targ)
 		UseSpell(ignite, targ)
+		if ignitos == 0 then int6 = 0 end
 		end
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo10()
 	if ts.target ~= nil then 
 	local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
+		int6 = 1
 		UseSpell(_E, targ)
 		UseSpell(DFG, targ)
 		if VeigarConfig.combo.tryq then
 		UseSpell(_R, targ)
 		UseSpell(ignite, targ)
 		UseSpell(_Q, targ)
+		if Q == 0 then int6 = 0 end
 		else
 		UseSpell(_Q, targ)
 		UseSpell(_R, targ)
 		UseSpell(ignite, targ)
+		if ignitos == 0 then int6 = 0 end
 		end
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo11()
 	if ts.target ~= nil then 
 		targ = ts.target
+		int6 = 1
 		UseSpell(_E, targ)
 			if W ~= 1 then
 			if VeigarConfig.combo.tryq then
 			UseSpell(_R, targ)
 			UseSpell(_Q, targ)
+			if Q == 0 then int6 = 0 end
 			else
 			UseSpell(_Q, targ)
 			UseSpell(_R, targ)
+			if R == 0 then int6 = 0 end
 			end
 		end
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo12()
 	if ts.target ~= nil then 
 	local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
+		int6 = 1
 		UseSpell(_E, targ)
 			if W ~= 1 then
 			UseSpell(DFG, targ)
 			if VeigarConfig.combo.tryq then
 			UseSpell(_R, targ)
 			UseSpell(_Q, targ)
+			if Q == 0 then int6 = 0 end
 			else
 			UseSpell(_Q, targ)
 			UseSpell(_R, targ)
+			if R == 0 then int6 = 0 end
 			end
 		end
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo13()
 	if ts.target ~= nil then 
 		targ = ts.target
+		int6 = 1
 		UseSpell(_E, targ)
 			if W ~= 1 then
 			if VeigarConfig.combo.tryq then
 			UseSpell(_R, targ)
 			UseSpell(ignite, targ)
 			UseSpell(_Q, targ)
+			if Q == 0 then int6 = 0 end
 			else
 			UseSpell(_Q, targ)
 			UseSpell(_R, targ)
 			UseSpell(ignite, targ)
+			if ignitos == 0 then int6 = 0 end
 			end
 		end
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo14()
 	if ts.target ~= nil then 
 	local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
+		int6 = 1
 		UseSpell(_E, targ)
 			if W ~= 1 then
 			UseSpell(DFG, targ)
@@ -1707,62 +1768,80 @@ function performcombo14()
 			UseSpell(_R, targ)
 			UseSpell(ignite, targ)
 			UseSpell(_Q, targ)
+			if Q == 0 then int6 = 0 end
 			else
 			UseSpell(_Q, targ)
 			UseSpell(_R, targ)
 			UseSpell(ignite, targ)
+			if ignitos == 0 then int6 = 0 end
 			end
 		end
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo15()
 	if ts.target ~= nil and GetDistance(ts.target, myHero) <= 650 then 
 		targ = ts.target
+		int6 = 1
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		UseSpell(_Q, targ)
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
+		if Q == 0 then int6 = 0 end
 	end
+	
 end
 
 function performcombo16()
 	if ts.target ~= nil then 
 		targ = ts.target
+		int6 = 1
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		UseSpell(_R, targ)
-		int4 = 0
+		--if VeigarConfig.combo.forceaa then aa() end
+		if R == 0 then int6 = 0 end
 	end
+	
 end
 
 function performcombo17()
 	if ts.target ~= nil then 
 		targ = ts.target
+		int6 = 1
 		UseSpell(_E, targ)
-	int4 = 0
+	--if VeigarConfig.combo.forceaa then aa() end
+	if W == 0 then int6 = 0 end
 	end
+	
 end
 
 function performcombo18()
 	if ts.target ~= nil then 
 		local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
+		int6 = 1
 		UseSpell(_E, targ)
 			if targ.canMove ~= true then
 			UseSpell(DFG, targ)
 			end
-	int4 = 0
+			if DFGI == 0 then int6 = 0 end
+	--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 function performcombo19()
 	if ts.target ~= nil then 
 		local DFG = GetInventorySlotItem(3128)
 		targ = ts.target
+		int6 = 1
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		UseSpell(ignite, targ)
-	int4 = 0
+		if ignitos == 0 then int6 = 0 end
+	--if VeigarConfig.combo.forceaa then aa() end
 	end
+	
 end
 
 
@@ -1847,7 +1926,7 @@ function UseStunV3()
 			end
 		end
 		if minE ~= nil then
-			if VeigarConfig.ew.stuncl then UseE(minE) else UseE(ctarget) end
+			if VeigarConfig.ew.stuncl and GetDistance(minE, myHero) <= 1000  then UseE(minE) elseif GetDistance(ts.target, myHero) <= 1000 then UseE(ts.target) end
 		end
 end
 
@@ -2025,33 +2104,39 @@ function Checks()
 	znaReady = (zhonya ~= nil and myHero:CanUseSpell(zhonya) == READY)
 	wgtReady = (wooglet ~= nil and myHero:CanUseSpell(wooglet) == READY)
 	--COMBO CHECKS--
+	if ts.target == nil or not VeigarConfig.combo.spacebarActive then int6 = 0 end
 	ctarget = ts.target
 	
 	if VeigarConfig.combo.spacebarActive and ValidTarget(ts.target) then
+		if int6 ~= 1 and VeigarConfig.combo.forceaa then aa() end
 		performSmartCombo()
-		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa()  end
 	end
 	
 	if VeigarConfig.combo.wasteall and ValidTarget(ts.target) and GetDistance(ts.target, myHero) <= 1000 then
+		if int6 ~= 1 and VeigarConfig.combo.forceaa then aa() end
 		performWasteCombo()
-		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa() end
 	end
 	
 	if VeigarConfig.combo.lightcombo and ValidTarget(ts.target) and GetDistance(ts.target, myHero) <= 1000 then
+		if int6 ~= 1 and VeigarConfig.combo.forceaa then aa() end
 		performLightCombo()
-		if int4 ~= 1 and VeigarConfig.combo.forceaa then aa() end
 	end
 	
 	for i, enemy in ipairs(GetEnemyHeroes()) do
 		expos = enemy.pos
 	end
 	
-	if VeigarConfig.ew.stuncl and GetDistance(enemy, myHero) <= 1000 then 
+	if VeigarConfig.ew.stuncl then 
 		UseStunV3()
 	end
+	if VeigarConfig.combo.forceaa and int6 ~= 1 and ts.target ~= nil then if VeigarConfig.combo.spacebarActive or VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall then if GetDistance(ts.target,myHero) <= 1000 then int7 = 1 else int7 = 0 end end end
 	--aatrange = VeigarConfig.combo.AAtrange
 	--aatcount = VeigarConfig.combo.AAtcount
-	
+	WALKtcount = VeigarConfig.combo.moveset.WALKtcount
+	WALKtrange = VeigarConfig.combo.moveset.WALKtrange
+	if CountEnemyHeroInRange(WALKtrange) <= WALKtcount then
+	if int7 ~= 1 then
+	if VeigarConfig.combo.moveset.allturn then
 	if VeigarConfig.combo.spacebarActive then
 	if VeigarConfig.combo.moveset.combo1 == 1 then moveToMouse() end
 	end
@@ -2073,6 +2158,9 @@ function Checks()
 	if VeigarConfig.ew.eCastActive then
 	if VeigarConfig.combo.moveset.combo6 == 1 then moveToMouse() end
 	end
+	end
+	end
+	end
 	
 	--SLOT CHECKS--
 	hppot = GetInventorySlotItem(2003)
@@ -2084,6 +2172,8 @@ function Checks()
 	wooglet = GetInventorySlotItem(3090)
 	DFG = GetInventorySlotItem(3128)
 end
+
+
 
 function GetNMinionsHit(Pos, radius)
 	local count = 0
