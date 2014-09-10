@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.6
+local version = 2.61
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -287,6 +287,10 @@ end
 
 --[END OF THE MAIN PART]
 
+function MouseOnMinimap()
+    return CursorIsUnder(GetMinimapX(0), GetMinimapY(14527), WINDOW_W - GetMinimapX(0), WINDOW_H - GetMinimapY(14527))
+end 
+
 function OnWndMsg(Msg, Key)
 	if Msg == WM_LBUTTONDOWN and VeigarConfig.combo.newts then
 		local minD = 0
@@ -299,7 +303,7 @@ function OnWndMsg(Msg, Key)
 				end
 			end
 		end
-		if starget and minD < 500 then
+		if starget and minD < 500 and not MouseOnMinimap() then
 			if starg and starget.charName == starg.charName then
 				starg = nil
 			else
