@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.62
+local version = 2.61
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -266,7 +266,7 @@ function OnTick()
 	Potions()
 	AutoLevel()
 	LifeSaver()
-	--CheckStunnedTargets()
+	if not VIP_USER then CheckStunnedTargets() end
 	autokiller()
 	if VeigarConfig.other.skin and VIP_USER and skinChanged() then
 		GenModelPacket("Veigar", VeigarConfig.other.skin1)
@@ -336,7 +336,7 @@ function OnProcessSpell(unit, spell)
 		end
 	end
 end
---[[
+
 function CheckStunnedTargets()
 		for i, enemy in ipairs(GetEnemyHeroes())  do
 			if enemy.canMove ~= true then
@@ -359,7 +359,6 @@ function CheckStunnedTargets()
 			end
 		end
 end
-]]
 
 stunList = {
  ["VeigarStun"] = true
