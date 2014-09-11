@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.61
+local version = 2.62
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -266,7 +266,7 @@ function OnTick()
 	Potions()
 	AutoLevel()
 	LifeSaver()
-	CheckStunnedTargets()
+	--CheckStunnedTargets()
 	autokiller()
 	if VeigarConfig.other.skin and VIP_USER and skinChanged() then
 		GenModelPacket("Veigar", VeigarConfig.other.skin1)
@@ -336,7 +336,7 @@ function OnProcessSpell(unit, spell)
 		end
 	end
 end
-
+--[[
 function CheckStunnedTargets()
 		for i, enemy in ipairs(GetEnemyHeroes())  do
 			if enemy.canMove ~= true then
@@ -359,6 +359,28 @@ function CheckStunnedTargets()
 			end
 		end
 end
+]]
+
+stunList = {
+ ["VeigarStun"] = true
+}
+function OnGainBuff(unit, buff)
+	if unit.team ~= myHero.team and stunList[buff.name] then
+					if VeigarConfig.ew.stunall then
+					if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
+						if rtarg ~= nil and unit.name == rtarg.name then
+							ProdictionWCallback(unit, unit, _W)
+						else
+							ProdictionWCallback(unit, unit, _W)
+						end
+					elseif VeigarConfig.LifeSaver.usew then
+						if rtarg ~= nil and unit.name == rtarg.name then
+							ProdictionWCallback(unit, unit, _W)
+						end
+					end
+				end
+		end
+	end
 
 function interupt()
     if E == 1 then
