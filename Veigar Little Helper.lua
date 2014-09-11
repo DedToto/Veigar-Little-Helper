@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.62
+local version = 2.63
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -25,7 +25,8 @@ local lastSkin = 0
 local ctarget = nil
 local rtarg = nil
 local m = nil
-
+local lx = nil
+local lz = nil
 --[KEYS]--
 local autoFarmKey = string.byte("J")
 local AutoBuy = string.byte("P")
@@ -101,6 +102,52 @@ local cageItselfRange = 375
 local cageDiff = 50
 local cageRange = cageSpellRange + (cageItselfRange/2) - cageDiff -- spell range + range of cage
 
+local AGCLIST = {
+	["Aatrox"] = {gcName = "AatroxQ"},
+	["Ahri"] = {gcName = "AhriTumble"},
+	["Alistar"] = {gcName = "Headbutt"},
+	["Corki"] = {gcName = "CarpetBomb"},
+	["Diana"] = {gcName = "DianaTeleport"},
+	["Ezreal"] = {gcName = "EzrealArcaneShift"},
+	["Fiora"] = {gcName = "FioraQ"},
+	["Fizz"] = {gcName = "FizzPiercingStrike"},
+	["Gnar"] = {gcName = "GnarE", "gnarbige"},
+	["Gragas"] = {gcName = "GragasE"},
+	["Graves"] = {gcName = "GravesMove"},
+	["Hecarim"] = {gcName = "HecarimUlt"},
+	["Irelia"] = {gcName = "IreliaGatotsu"},
+	["JarvanIV"] = {gcName = "JarvanIVDragonStrike"},
+	["Jax"] = {gcName = "JaxLeapStrike"},
+	["Khazix"] = {gcName = "KhazixE"},
+	["Leblanc"] = {gcName = "LeblancSlide", "LeblancSlideM"},
+	["LeeSin"] = {gcName = "blindmonkqtwodash"},
+	["Leona"] = {gcName = "LeonaZenithBlade"},
+	["Lucian"] = {gcName = "LucianE"},
+	["Maokai"] = {gcName = "MaokaiUnstableGrowth"},
+	["MonkeyKing"] = {gcName = "MonkeyKingNimbus"},
+	["Nautilus"] = {gcName = "NautilusAnchorDrag"},
+	["Nidalee"] = {gcName = "Pounce"},
+	["Pantheon"] = {gcName = "PantheonW"},
+	["Poppy"] = {gcName = "PoppyHeroicCharge"},
+	["Quinn"] = {gcName = "QuinnE", "QuinnValorE"},
+	["Renekton"] = {gcName = "RenektonSliceAndDice"},
+	["Riven"] = {gcName = "RivenTriCleave"},
+	["Sejuani"] = {gcName = "SejuaniArcticAssault"},
+	["Shen"] = {gcName = "ShenShadowDash"},
+	["Thresh"] = {gcName = "threshqleap"},
+	["Tristana"] = {gcName = "RocketJump"},
+	["Tryndamere"] = {gcName = "slashCast"},
+	["Vi"] = {gcName = "ViQ"},
+	["Volibear"] = {gcName = "VolibearQ"},
+	["XinZhao"] = {gcName = "XenZhaoSweep"},
+	["Yasuo"] = {gcName = "YasuoDashWrapper"},
+	["Zac"] = {gcName = "ZacE"},
+}
+
+local AGCSPELLS = {
+	["SummonerFlash"] = true,
+}
+
 --[Interuptions]--
 	local InterruptList = {"CaitlynAceintheHole", "Crowstorm", "DrainChannel", "GalioIdolOfDurand", "KatarinaR", "InfiniteDuress", "AbsoluteZero", "MissFortuneBulletTime", "AlZaharNetherGrasp", "DariusExecute", "AhriTumble", "FallenOne", "LucianR", "SoulShackles", "UndyingRage", "GrandSkyfall", "VolibearQ", "MonkeyKingSpinToWin", "XerathLocusOfPower2", "ZacR"}
 --[MAIN PART]
@@ -111,6 +158,7 @@ function OnLoad()
 	player = GetMyHero()
 	UpdateCheck()
 	IgniteSlot()
+	MakeAGCTable()
 	spaceHK = 32
 	
 	VeigarConfig = scriptConfig("Veigar, the Tiny Master Of Evil", "littlehelper")
@@ -210,6 +258,17 @@ function OnLoad()
 	
 	VeigarConfig:addSubMenu("Life Saver","LifeSaver")
 		VeigarConfig.LifeSaver:addParam("LifeSaver", "Stun enemies Who come too close", SCRIPT_PARAM_ONOFF, false)
+		
+		VeigarConfig.LifeSaver:addSubMenu("Anti-Gap closer settings", "listSub")
+		
+		VeigarConfig.LifeSaver.listSub:addParam("gapc", "Stun enemies who use gap closers", SCRIPT_PARAM_ONOFF, false)
+		
+		VeigarConfig.LifeSaver.listSub:addParam("gapcr", "Range in which stun gapc users", SCRIPT_PARAM_SLICE, 650, 10, 1000, 0)
+		
+			for _, enemy in ipairs(GetEnemyHeroes()) do
+				VeigarConfig.LifeSaver.listSub:addParam(enemy.charName, "Use AntiGapClose on:"..enemy.charName, SCRIPT_PARAM_ONOFF, true)
+			end
+		
 		VeigarConfig.LifeSaver:addParam("LifeSaverRange","Range of LifeSaver", SCRIPT_PARAM_SLICE, 400, 1, 800, 0)
 		VeigarConfig.LifeSaver:addParam("usew", "Use W on emeies caught in LifeSaver", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver:addParam("zwsave", "Auto activate Zhonyas/Wooglets/Seraph", SCRIPT_PARAM_ONOFF, false)
@@ -266,7 +325,7 @@ function OnTick()
 	Potions()
 	AutoLevel()
 	LifeSaver()
-	if not VIP_USER then CheckStunnedTargets() end
+	freecheck()
 	autokiller()
 	if VeigarConfig.other.skin and VIP_USER and skinChanged() then
 		GenModelPacket("Veigar", VeigarConfig.other.skin1)
@@ -286,6 +345,14 @@ function OnDraw()
 end
 
 --[END OF THE MAIN PART]
+
+function MakeAGCTable()
+	for _, enemy in ipairs(GetEnemyHeroes()) do
+		if AGCLIST[enemy.charName] then
+			AGCSPELLS[AGCLIST[enemy.charName].gcName] = true
+		end			
+	end
+end
 
 function MouseOnMinimap()
     return CursorIsUnder(GetMinimapX(0), GetMinimapY(14527), WINDOW_W - GetMinimapX(0), WINDOW_H - GetMinimapY(14527))
@@ -332,34 +399,95 @@ function OnProcessSpell(unit, spell)
 			if (eradius + erange) >= GetDistance(unit) then
 				ProdictionECallback(Vector(unit.x, 0, unit.z), Vector(unit.x, 0, unit.z), _E)
 				PrintChat("<font color=\"#FF0000\">Trying to interrupt: " .. spell.name.."</font>")
+			end 
+		end
+	end
+end
+
+function OnProcessSpell(unit, spell)
+if VeigarConfig.LifeSaver.listSub.gapc then
+	if AGCSPELLS[spell.name] and unit.team ~= myHero.team and VeigarConfig.LifeSaver.listSub[unit.charName] then
+		local dist = GetDistance(unit, myHero)
+		if dist < VeigarConfig.LifeSaver.listSub.gapcr then
+			if unit then 
+			l = 1
+				--CastSpell(_E, spell.endPos.x, spell.endPos.z)
+			lx = spell.endPos.x
+			lz = spell.endPos.z
+			if VeigarConfig.LifeSaver.listSub.gapc then
+			castESpellOnTarget(unit)
+			end
+			end
+		end
+	end
+	end
+end
+--[[
+function CheckStunnedTargets()
+	for i, enemy in ipairs(GetEnemyHeroes())  do
+		if enemy.canMove ~= true then
+			if VeigarConfig.ew.stunall then
+				if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
+					if rtarg ~= nil and enemy.name == rtarg.name then
+						ProdictionWCallback(enemy, enemy, _W)
+					else
+						ProdictionWCallback(enemy, enemy, _W)
+					end
+				elseif VeigarConfig.LifeSaver.usew then
+					if rtarg ~= nil and enemy.name == rtarg.name then
+						ProdictionWCallback(enemy, enemy, _W)
+					end
+				end
 			end
 		end
 	end
 end
 
-function CheckStunnedTargets()
-		for i, enemy in ipairs(GetEnemyHeroes())  do
-			if enemy.canMove ~= true then
-				if VeigarConfig.ew.stunall then
+
+function OnGainBuff(unit, buff)
+	if unit.team ~= myHero.team and stunList[unit.charName] == buff.name then
+	PrintChat("OMG")
+			if VeigarConfig.ew.stunall then
+				if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
+					if rtarg ~= nil and enemy.name == rtarg.name then
+						ProdictionWCallback(enemy, enemy, _W)
+					else
+						ProdictionWCallback(enemy, enemy, _W)
+					end
+				elseif VeigarConfig.LifeSaver.usew then
+					if rtarg ~= nil and enemy.name == rtarg.name then
+						ProdictionWCallback(enemy, enemy, _W)
+					end
+				end
+			end
+	end
+	end
+	
+]]
+
+function freecheck()
+	for i, enemy in ipairs(GetEnemyHeroes())  do
+	if enemy == rtarg and rtarg ~= nil then
+	if TargetHaveBuff("VeigarStun", enemy) then
+						if VeigarConfig.ew.stunall then
 					if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
 						if rtarg ~= nil and enemy.name == rtarg.name then
 							ProdictionWCallback(enemy, enemy, _W)
-						end
-						
 						else
-						ProdictionWCallback(enemy, enemy, _W)
-					end
-					else
-					if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.LifeSaver.usew or VeigarConfig.ew.eCastActive then
+							ProdictionWCallback(enemy, enemy, _W)
+						end
+					elseif VeigarConfig.LifeSaver.usew then
 						if rtarg ~= nil and enemy.name == rtarg.name then
 							ProdictionWCallback(enemy, enemy, _W)
 						end
 					end
 				end
-			end
 		end
-end
+	end
+	end
+	end
 
+--[[
 stunList = {
  ["VeigarStun"] = true
 }
@@ -380,7 +508,7 @@ function OnGainBuff(unit, buff)
 				end
 		end
 	end
-
+]]
 function interupt()
     if E == 1 then
         for i, spell in ipairs(spells) do
@@ -971,9 +1099,18 @@ function calcsinglestun()
     if predicted and (hitchance1 >=2) then
       local CircX, CircZ
       local dis = math.sqrt((player.x - predicted.x) ^ 2 + (player.z - predicted.z) ^ 2)
+	  if l ~= 1 then
       CircX = predicted.x + eradius * ((player.x - predicted.x) / dis)
       CircZ = predicted.z + eradius * ((player.z - predicted.z) / dis)
+	  else
+      CircX = lx + eradius * ((player.x - predicted.x) / dis)
+      CircZ = lz + eradius * ((player.z - predicted.z) / dis)
+	  end
+	  lx = nil
+	  lz = nil
+	  l = 0
       return CircX, CircZ
+
     end
   end
 end
