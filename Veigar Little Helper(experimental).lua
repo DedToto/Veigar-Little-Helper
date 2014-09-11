@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.61
+local version = 2.62
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -325,7 +325,7 @@ function OnTick()
 	Potions()
 	AutoLevel()
 	LifeSaver()
-	--CheckStunnedTargets()
+	if not VIP_USER then CheckStunnedTargets() end
 	autokiller()
 	if VeigarConfig.other.skin and VIP_USER and skinChanged() then
 		GenModelPacket("Veigar", VeigarConfig.other.skin1)
@@ -403,7 +403,9 @@ function OnProcessSpell(unit, spell)
 		end
 	end
 end
+
 function OnProcessSpell(unit, spell)
+if VeigarConfig.LifeSaver.listSub.gapc then
 	if AGCSPELLS[spell.name] and unit.team ~= myHero.team and VeigarConfig.LifeSaver.listSub[unit.charName] then
 		local dist = GetDistance(unit, myHero)
 		if dist < VeigarConfig.LifeSaver.listSub.gapcr then
@@ -417,6 +419,7 @@ function OnProcessSpell(unit, spell)
 			end
 			end
 		end
+	end
 	end
 end
 --[[
