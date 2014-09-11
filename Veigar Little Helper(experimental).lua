@@ -486,6 +486,7 @@ function OnGainBuff(unit, buff)
 	end
 	
 ]]
+--[[
 stunList = {
  ["VeigarStun"] = true
 }
@@ -506,7 +507,7 @@ function OnGainBuff(unit, buff)
 				end
 		end
 	end
-
+]]
 function interupt()
     if E == 1 then
         for i, spell in ipairs(spells) do
