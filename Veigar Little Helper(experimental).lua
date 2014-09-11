@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.62
+local version = 2.63
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -325,7 +325,7 @@ function OnTick()
 	Potions()
 	AutoLevel()
 	LifeSaver()
-	if not VIP_USER then CheckStunnedTargets() end
+	freecheck()
 	autokiller()
 	if VeigarConfig.other.skin and VIP_USER and skinChanged() then
 		GenModelPacket("Veigar", VeigarConfig.other.skin1)
@@ -345,6 +345,28 @@ function OnDraw()
 end
 
 --[END OF THE MAIN PART]
+
+function freecheck()
+	for i, enemy in ipairs(GetEnemyHeroes())  do
+	if enemy == rtarg and rtarg ~= nil then
+	if TargetHaveBuff("VeigarStun", enemy) then
+						if VeigarConfig.ew.stunall then
+					if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
+						if rtarg ~= nil and enemy.name == rtarg.name then
+							ProdictionWCallback(enemy, enemy, _W)
+						else
+							ProdictionWCallback(enemy, enemy, _W)
+						end
+					elseif VeigarConfig.LifeSaver.usew then
+						if rtarg ~= nil and enemy.name == rtarg.name then
+							ProdictionWCallback(enemy, enemy, _W)
+						end
+					end
+				end
+		end
+	end
+	end
+	end
 
 function MakeAGCTable()
 	for _, enemy in ipairs(GetEnemyHeroes()) do
