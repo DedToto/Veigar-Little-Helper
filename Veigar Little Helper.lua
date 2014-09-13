@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.64
+local version = 2.65
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -422,31 +422,66 @@ if VeigarConfig.LifeSaver.listSub.gapc then
 	end
 	end
 end
+--[[
+function CheckStunnedTargets()
+	for i, enemy in ipairs(GetEnemyHeroes())  do
+		if enemy.canMove ~= true then
+			if VeigarConfig.ew.stunall then
+				if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
+					if rtarg ~= nil and enemy.name == rtarg.name then
+						ProdictionWCallback(enemy, enemy, _W)
+					else
+						ProdictionWCallback(enemy, enemy, _W)
+					end
+				elseif VeigarConfig.LifeSaver.usew then
+					if rtarg ~= nil and enemy.name == rtarg.name then
+						ProdictionWCallback(enemy, enemy, _W)
+					end
+				end
+			end
+		end
+	end
+end
+
+
+function OnGainBuff(unit, buff)
+	if unit.team ~= myHero.team and stunList[unit.charName] == buff.name then
+	PrintChat("OMG")
+			if VeigarConfig.ew.stunall then
+				if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
+					if rtarg ~= nil and enemy.name == rtarg.name then
+						ProdictionWCallback(enemy, enemy, _W)
+					else
+						ProdictionWCallback(enemy, enemy, _W)
+					end
+				elseif VeigarConfig.LifeSaver.usew then
+					if rtarg ~= nil and enemy.name == rtarg.name then
+						ProdictionWCallback(enemy, enemy, _W)
+					end
+				end
+			end
+	end
+	end
+	
+]]
 
 function freecheck()
-
-	for i, enemy in ipairs(GetEnemyHeroes())  do
-	if enemy == rtarg and rtarg ~= nil then
-	if TargetHaveBuff("VeigarStun", enemy) then
-						if VeigarConfig.ew.stunall then
+	function freecheck()
+		for i, enemy in ipairs(GetEnemyHeroes())  do
+			if enemy == rtarg and rtarg ~= nil then
+				if TargetHaveBuff("VeigarStun", enemy) then
 					if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
-						if rtarg ~= nil and enemy.name == rtarg.name then
-							ProdictionWCallback(enemy, enemy, _W)
-						else
-							ProdictionWCallback(enemy, enemy, _W)
-						end
-					elseif VeigarConfig.LifeSaver.usew then
 						if rtarg ~= nil and enemy.name == rtarg.name then
 							ProdictionWCallback(enemy, enemy, _W)
 						end
 					end
 				end
+			end
 		end
 	end
-	end
-	
-	end
+end
 
+--[[
 stunList = {
  ["VeigarStun"] = true
 }
@@ -467,7 +502,7 @@ function OnGainBuff(unit, buff)
 				end
 		end
 	end
-
+]]
 function interupt()
     if E == 1 then
         for i, spell in ipairs(spells) do
