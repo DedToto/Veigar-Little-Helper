@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.63
+local version = 2.65
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -184,7 +184,7 @@ function OnLoad()
 				VeigarConfig.combo.moveset:addParam("combo6", "Select for E+W", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
 				VeigarConfig.combo.moveset:addParam("combo7", "Select for Q harras", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
 		VeigarConfig.combo:addParam("table","------------------Settings--------------",SCRIPT_PARAM_INFO,"")	
-			if VIP_USER then VeigarConfig.combo:addParam("packet", "Use Packets to Cast Skills", SCRIPT_PARAM_ONOFF, false) end
+			--if VIP_USER then VeigarConfig.combo:addParam("packet", "Use Packets to Cast Skills", SCRIPT_PARAM_ONOFF, false) end
 			VeigarConfig.combo:addParam("savedfg", "Only use DFG in biggest combos", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("ShowMana", "Show Time for full combo mana regen", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.combo:addParam("ShowCombo", "Show current spacebar combo(target)", SCRIPT_PARAM_ONOFF, false)
@@ -276,12 +276,12 @@ function OnLoad()
 		VeigarConfig.LifeSaver:addParam("antign", "Auto Pots when ignited/morde R", SCRIPT_PARAM_ONOFF, true)
 	
 	VeigarConfig:addSubMenu("Other","other")
-		if VIP_USER then VeigarConfig.other:addParam("skin", "Use change skin", SCRIPT_PARAM_ONOFF, false) end
+		--[[if VIP_USER then VeigarConfig.other:addParam("skin", "Use change skin", SCRIPT_PARAM_ONOFF, false) end
 		if VIP_USER then VeigarConfig.other:addParam("skin1", "Skin change(VIP)", SCRIPT_PARAM_SLICE, 5, 1, 8) end
 		if VeigarConfig.other.skin and VIP_USER then
 		GenModelPacket("Veigar", VeigarConfig.other.skin1)
 		lastSkin = VeigarConfig.other.skin1
-		end
+		end]]
 		VeigarConfig.other:addParam("AutoBuy", "Buy Starting Items", SCRIPT_PARAM_ONKEYDOWN, false, AutoBuy)
 		VeigarConfig.other:addParam("Autolvl", "Auto level up skills", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("lvlup", "Select skill sequence", SCRIPT_PARAM_LIST, 1, { "Q>W>E", "W>Q>E", "W>E>Q" })
@@ -327,15 +327,15 @@ function OnTick()
 	LifeSaver()
 	freecheck()
 	autokiller()
-	if VeigarConfig.other.skin and VIP_USER and skinChanged() then
+	--[[if VeigarConfig.other.skin and VIP_USER and skinChanged() then
 		GenModelPacket("Veigar", VeigarConfig.other.skin1)
 		lastSkin = VeigarConfig.other.skin1
-	end
+	end]]
 	aa()
 end
 
 function OnDraw()
-	_drawstartsprite()
+	if VIP_USER then _drawstartsprite() end
 	ManaRegenSec()
 	if not myHero.dead or VeigarConfig.other.Death then
 		DamageCalculator()
@@ -345,28 +345,6 @@ function OnDraw()
 end
 
 --[END OF THE MAIN PART]
-
-function freecheck()
-	for i, enemy in ipairs(GetEnemyHeroes())  do
-	if enemy == rtarg and rtarg ~= nil then
-	if TargetHaveBuff("VeigarStun", enemy) then
-						if VeigarConfig.ew.stunall then
-					if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
-						if rtarg ~= nil and enemy.name == rtarg.name then
-							ProdictionWCallback(enemy, enemy, _W)
-						else
-							ProdictionWCallback(enemy, enemy, _W)
-						end
-					elseif VeigarConfig.LifeSaver.usew then
-						if rtarg ~= nil and enemy.name == rtarg.name then
-							ProdictionWCallback(enemy, enemy, _W)
-						end
-					end
-				end
-		end
-	end
-	end
-	end
 
 function MakeAGCTable()
 	for _, enemy in ipairs(GetEnemyHeroes()) do
@@ -486,6 +464,23 @@ function OnGainBuff(unit, buff)
 	end
 	
 ]]
+
+function freecheck()
+	function freecheck()
+		for i, enemy in ipairs(GetEnemyHeroes())  do
+			if enemy == rtarg and rtarg ~= nil then
+				if TargetHaveBuff("VeigarStun", enemy) then
+					if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
+						if rtarg ~= nil and enemy.name == rtarg.name then
+							ProdictionWCallback(enemy, enemy, _W)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
 --[[
 stunList = {
  ["VeigarStun"] = true
@@ -870,10 +865,6 @@ function AutoWharrasQ()
 	for i, enemy in ipairs(GetEnemyHeroes()) do
 		
 		if ValidTarget(enemy) then
-			if VeigarConfig.other.autoW and player:CanUseSpell(_W) == READY and enemy.canMove ~= true and IsGoodTarget(enemy, erange) then
-				UseSpell(_W, enemy)
-				return
-			end
 			if VeigarConfig.harras.moveto and VeigarConfig.harras.Qharras then moveToMouse() end
 			if VeigarConfig.harras.Qharras and IsGoodTarget(enemy, qRange) then
 				if (VeigarConfig.harras.manasaveQ and manaPct() > VeigarConfig.harras.manasaveQP) or not VeigarConfig.harras.manasaveQ then
@@ -1169,7 +1160,7 @@ end
 
 function UseSpell(Spell,target)
 	if Spell == _Q then
-		if VeigarConfig.combo.packet then
+		if VIP_USER and VeigarConfig.combo.packet then
 			Packet("S_CAST", {spellId = Spell, targetNetworkId = target.networkID}):send()
 		else
 			CastSpell(Spell, target)
@@ -1180,19 +1171,19 @@ function UseSpell(Spell,target)
 	elseif Spell == _E then
 		if VeigarConfig.ew.stunv == 1 then useStun(ctarget) elseif VeigarConfig.ew.stunv == 2 then UseStunV2() elseif VeigarConfig.ew.stunv == 3 then UseStunV3() end
 	elseif Spell == _R then
-		if VeigarConfig.combo.packet then
+		if VIP_USER and VeigarConfig.combo.packet then
 			Packet("S_CAST", {spellId = Spell, targetNetworkId = target.networkID}):send()
 		else
 			CastSpell(Spell, target)
 		end
 	elseif Spell == DFG then
-		if VeigarConfig.combo.packet then
+		if VIP_USER and VeigarConfig.combo.packet then
 			Packet("S_CAST", {spellId = Spell, targetNetworkId = target.networkID}):send()
 		else
 			CastSpell(DFG, rtarg)
 		end
 	elseif Spell == ignite then
-		if VeigarConfig.combo.packet then
+		if VIP_USER and VeigarConfig.combo.packet then
 			Packet("S_CAST", {spellId = Spell, targetNetworkId = target.networkID}):send()
 		else
 			CastSpell(Spell, target)
