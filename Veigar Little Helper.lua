@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.7
+local version = 2.71
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -1461,7 +1461,7 @@ function Potions()
 		end
 
 		if  TargetHaveBuff("SummonerDot", myHero) or TargetHaveBuff("MordekaiserChildrenOfTheGrave", myHero) and not InFountain() and VeigarConfig.LifeSaver.antign then
-			if hppot ~= nil then
+			if hppot ~= nil and not TargetHaveBuff("RegenerationPotion", myHero) then
 				CastSpell(hppot)
 			end
 			
