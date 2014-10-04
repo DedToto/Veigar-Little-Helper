@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.71
+local version = 2.72
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -229,7 +229,7 @@ function OnLoad()
 			VeigarConfig.draw:addParam("LifeSaverRange", "Draw LifeSaver range", SCRIPT_PARAM_ONOFF, true)
 				
 		VeigarConfig.draw:addParam("table1","------------------Enemies Related-------------",SCRIPT_PARAM_INFO,"")
-		
+			VeigarConfig.draw:addParam("drawvar", "Select drawings location", SCRIPT_PARAM_LIST, 1, { "Near HP bar", "In the middle of a champ"})
 			VeigarConfig.draw:addParam("targg", "Mark Target with circle", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.draw:addParam("targ", "Draw line to Target(for team fights)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.draw:addParam("ExtraInfo", "Draw best combo for kill", SCRIPT_PARAM_ONOFF, true)
@@ -749,7 +749,7 @@ function ExtraInformation()
 				if ignitos ~= 0 then IGNITEdmg = 50 + 20 * myHero.level end
 				if DFGI ~= 0 then DFGdmg = getDmg("DFG", enemy ,myHero) end
 				local HPBAR = GetHPBarPos(enemy)
-				
+				if VeigarConfig.draw.drawvar == 1 then
 				if (enemy.health < (Qdmg) and Q ~= 0 ) then																																							--Q
 					--DrawText3D(("Q"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) 
 					DrawText("Q",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
@@ -859,9 +859,85 @@ function ExtraInformation()
 					DrawText(("|DFG|Q+W+R+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					else
 					kill = 0
-					
+				end
+				else
+				if (enemy.health < (Qdmg) and Q ~= 0 ) then																																							--Q
+					DrawText3D(("Q"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true) 
+					elseif (enemy.health < (Qdmg + AAdmg) and Q ~= 0 ) then																																			--Q+AA
+					DrawText3D(("Q+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true) 
+					elseif (enemy.health < (Qdmgi + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																															--DFG Q
+					DrawText3D(("|DFG|Q"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																													--DFG Q+AA
+					DrawText3D(("|DFG|Q+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (Wdmg ) and W ~= 0 and E ~= 0) then																																		--W
+					DrawText3D(("W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (Wdmg + AAdmg) and W ~= 0 and E ~= 0) then																																--W+AA
+					DrawText3D(("W+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (Wdmg + DFGdmg ) and W ~= 0 and E ~= 0 and DFGI ~= 0) then																												--DFG W	
+					DrawText3D(("|DFG|W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (Wdmg + DFGdmg + AAdmg) and W ~= 0 and E ~= 0 and DFGI ~= 0) then																										--DFG W+AA
+					DrawText3D(("|DFG|W+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (IGNITEdmg) and ignitos ~= 0) then																																		--IGN
+					DrawText3D(("IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (IGNITEdmg + AAdmg) and ignitos ~= 0) then																																--IGN+AA
+					DrawText3D(("IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg ) and Q ~= 0 and W ~= 0 ) then 																																--Q+W
+					DrawText3D(("Q+W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + AAdmg) and Q ~= 0 and W ~= 0 ) then 																														--Q+W+AA
+					DrawText3D(("Q+W+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi  + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0) then 																										--DFG Q+W
+					DrawText3D(("|DFG|Q+W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0) then 																								--DFG Q+W+AA
+					DrawText3D(("|DFG|Q+W+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + IGNITEdmg ) and Q ~= 0 and W ~= 0 and ignitos ~= 0 ) then																									--Q+W+IGN
+					DrawText3D(("Q+W+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + IGNITEdmg + AAdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 ) then																							--Q+W+IGN+AA
+					DrawText3D(("Q+W+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + IGNITEdmg  + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																			--DFG Q+W+IGN
+					DrawText3D(("|DFG|Q+W+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																	--DFG Q+W+IGN+AA
+					DrawText3D(("|DFG|Q+W+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Rdmg ) and R ~= 0) then																																					--R
+					DrawText3D(("R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Rdmg + AAdmg) and R ~= 0) then																																			--R+AA
+					DrawText3D(("R+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg  + Rdmg) and Q ~= 0 and R ~= 0 ) then																																--Q+R
+					DrawText3D(("Q+R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 ) then																														--Q+R+AA
+					DrawText3D(("Q+R+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi  + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																										--DFG Q+R
+					DrawText3D(("|DFG|Q+R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																								--DFG Q+R+AA
+					DrawText3D(("|DFG|Q+R+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + IGNITEdmg  + Rdmg) and Q ~= 0 and R ~= 0 and ignitos ~= 0 ) then																									--Q+R+IGN
+					DrawText3D(("Q+R+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)		
+					elseif (enemy.health < (Qdmg + IGNITEdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 and ignitos ~= 0 ) then																							--Q+R+IGN+AA
+					DrawText3D(("Q+R+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + IGNITEdmg  + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																			--DFG Q+R+IGN
+					DrawText3D(("|DFG|Q+R+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + IGNITEdmg + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																	--DFG Q+R+IGN+AA
+					DrawText3D(("|DFG|Q+R+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + Rdmg  ) and Q ~= 0 and W ~= 0 and R ~= 0 ) then																											--Q+W+R
+					DrawText3D(("Q+W+R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + AAdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 ) then																									--Q+W+R+AA
+					DrawText3D(("Q+W+R+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi  + DFGdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and DFGI ~= 0) then																					--DFG Q+W+R
+					DrawText3D(("|DFG|Q+W+R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + AAdmg + DFGdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and DFGI ~= 0) then																			--DFG Q+W+R+AA
+					DrawText3D(("|DFG|Q+W+R+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + IGNITEdmg  ) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 ) then																				--Q+W+R+IGN
+					DrawText3D(("Q+W+R+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + IGNITEdmg + AAdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 ) then																		--Q+W+R+IGN+AA
+					DrawText3D(("Q+W+R+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg  + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then														--DFG Q+W+R+IGN
+					DrawText3D(("|DFG|Q+W+R+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then												--DFG Q+W+R+IGN+AA
+					DrawText3D(("|DFG|Q+W+R+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health > (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then												--unkillable
 				end
 				
+				end
+				if VeigarConfig.draw.drawvar == 1 then
 				local HPBARM = GetHPBarPos(myHero)
 				if ftarg ~= nil then DrawText("Lock on:"..ftarg.charName.."",15, HPBARM.x - 76, HPBARM.y - 5,RGB(55, 255, 55)) end 
 				if VeigarConfig.draw.MainCalc then if enemy.health <= dd then DrawText(""..math.floor((dd - enemy.health)+0.5).." Extra !!",20, HPBAR.x - 127, HPBAR.y - 3,RGB(255, 0, 0)) else DrawText(""..math.floor((enemy.health - dd)+0.5).." More !!",20, HPBAR.x - 127, HPBAR.y - 3,RGB(255, 255, 255)) end end
@@ -874,7 +950,12 @@ function ExtraInformation()
 				DrawText(""..enemy.charName..": Unkillable",20, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 				if ftarg ~= nil and enemy == ftarg then DrawText("(L)",20, HPBAR.x - 150, HPBAR.y - 40,RGB(51, 250, 51)) end
 				if tt ~= nil and enemy == tt then if enemy == ftarg then DrawText("(T)",20, HPBAR.x - 170, HPBAR.y - 40,RGB(255, 0, 0)) else DrawText("(T)",20, HPBAR.x - 150, HPBAR.y - 40,RGB(255, 0, 0)) end end
-				end			
+				end	
+				else
+				local HPBARM = GetHPBarPos(myHero)
+				if ftarg ~= nil then DrawText("Lock on:"..ftarg.charName.."",15, HPBARM.x - 76, HPBARM.y - 5,RGB(55, 255, 55)) end 
+				if VeigarConfig.draw.MainCalc then if enemy.health <= dd then DrawText3D(""..math.floor((dd - enemy.health)+0.5).." Extra !!", enemy.x, enemy.y, enemy.z, 25, RGB(255, 0, 0), true) else DrawText3D(""..math.floor((enemy.health - dd)+0.5).." More !!", enemy.x, enemy.y, enemy.z, 25, RGB(255, 255, 255), true) end end
+				end
 			end
 		end
 	end
