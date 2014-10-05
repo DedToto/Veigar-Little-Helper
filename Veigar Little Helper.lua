@@ -955,7 +955,16 @@ function ExtraInformation()
 				DrawText(""..enemy.charName..": Unkillable",20, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 				if ftarg ~= nil and enemy == ftarg then DrawText("(L)",20, HPBAR.x - 150, HPBAR.y - 40,RGB(51, 250, 51)) end
 				if tt ~= nil and enemy == tt then if enemy == ftarg then DrawText("(T)",20, HPBAR.x - 170, HPBAR.y - 40,RGB(255, 0, 0)) else DrawText("(T)",20, HPBAR.x - 150, HPBAR.y - 40,RGB(255, 0, 0)) end end
-				end	
+				end
+				if VeigarConfig.draw.warnab then
+					if GetInventoryHaveItem(3111, enemy) == true or GetInventoryHaveItem(3170, enemy) == true or GetInventoryHaveItem(3172, enemy) == true then
+						if myHero:GetSpellData(_E).level ~= nil and myHero:GetSpellData(_W).level ~= nil then 
+							if getelvl() < 1.25 then
+								DrawText("Warn:E<W("..getelvl()..")s",15, HPBAR.x - 127, HPBAR.y + 12,RGB(255, 0, 0))
+							end
+						end
+					end
+				end				
 				else
 				local HPBARM = GetHPBarPos(myHero)
 				if ftarg ~= nil then DrawText("Lock on:"..ftarg.charName.."",15, HPBARM.x - 76, HPBARM.y - 5,RGB(55, 255, 55)) end 
@@ -974,15 +983,6 @@ function ExtraInformation()
 				if tenvar ~= nil and not myHero:GetSpellData(_E).level == 0 and not myHero:GetSpellData(_W).level == 0 then if getelvl() < 1.5 then DrawText("Warn:E<W",15, HPBAR.x - 127, HPBAR.y + 12,RGB(255, 0, 0)) end end
 				DrawText("Warn:E<W("..getelvl()..")",15, HPBAR.x - 127, HPBAR.y + 12,RGB(255, 0, 0))
 				]]
-				if VeigarConfig.draw.warnab then
-					if GetInventoryHaveItem(3111, enemy) == true or GetInventoryHaveItem(3170, enemy) == true or GetInventoryHaveItem(3172, enemy) == true then
-						if myHero:GetSpellData(_E).level ~= nil and myHero:GetSpellData(_W).level ~= nil then 
-							if getelvl() < 1.25 then
-								DrawText("Warn:E<W("..getelvl()..")s",15, HPBAR.x - 127, HPBAR.y + 12,RGB(255, 0, 0))
-							end
-						end
-					end
-				end
 			end
 		end
 	end
