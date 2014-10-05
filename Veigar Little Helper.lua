@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.72
+local version = 2.8
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -30,6 +30,8 @@ local lz = nil
 local ftarget = nil
 local tt = nil
 local dd = nil
+local tenff = nil
+local tenvar = nil
 --[KEYS]--
 local autoFarmKey = string.byte("J")
 local AutoBuy = string.byte("P")
@@ -151,6 +153,13 @@ local AGCSPELLS = {
 	["SummonerFlash"] = true,
 }
 
+local TELESPELLS = {
+	["PantheonRFall"] = true,
+	--["LeblancSlide"] = true,
+	--["LeblancSlideM"] = true,
+	["gate"] = true,
+	["Crowstorm"] = true,
+}	
 --[Interuptions]--
 	local InterruptList = {"CaitlynAceintheHole", "Crowstorm", "DrainChannel", "GalioIdolOfDurand", "KatarinaR", "InfiniteDuress", "AbsoluteZero", "MissFortuneBulletTime", "AlZaharNetherGrasp", "DariusExecute", "AhriTumble", "FallenOne", "LucianR", "SoulShackles", "UndyingRage", "GrandSkyfall", "VolibearQ", "MonkeyKingSpinToWin", "XerathLocusOfPower2", "ZacR"}
 --[MAIN PART]
@@ -175,6 +184,7 @@ function OnLoad()
 			VeigarConfig.combo.autokillf:addParam("useign", "Use IGN", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveab", "Don't waste spells if OverDmg is > than", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveabsl", "OverDamage config ", SCRIPT_PARAM_SLICE, 1, 1, 1000, 0)
+			
 	VeigarConfig.combo:addSubMenu("Movement Settings","moveset")
 				VeigarConfig.combo.moveset:addParam("allturn", "Turn everything ON/OFF", SCRIPT_PARAM_ONOFF, false)
 				VeigarConfig.combo.moveset:addParam("WALKtcount", "Don't Move if > x champions around", SCRIPT_PARAM_SLICE, 3, 1, 5, 0)
@@ -186,6 +196,7 @@ function OnLoad()
 				VeigarConfig.combo.moveset:addParam("combo5", "Select for StunClosest", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
 				VeigarConfig.combo.moveset:addParam("combo6", "Select for E+W", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
 				VeigarConfig.combo.moveset:addParam("combo7", "Select for Q harras", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
+				
 		VeigarConfig.combo:addParam("table","------------------Settings--------------",SCRIPT_PARAM_INFO,"")	
 			if VIP_USER then VeigarConfig.combo:addParam("packet", "Use Packets to Cast Skills", SCRIPT_PARAM_ONOFF, false) end
 			VeigarConfig.combo:addParam("savedfg", "Only use DFG in biggest combos", SCRIPT_PARAM_ONOFF, false)
@@ -193,10 +204,9 @@ function OnLoad()
 			VeigarConfig.combo:addParam("ShowCombo", "Show current spacebar combo(target)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("tryq", "Always try to lasthit enemy with Q", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("forceaa", "AA after combo(RECOMMENDED)", SCRIPT_PARAM_ONOFF, true)
-			VeigarConfig.combo:addParam("newts", "Left Click LOCK Target", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.combo:addParam("newts", "Left Click LOCK Target", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.combo:addParam("newtsr", "Auto remove lock from dead target", SCRIPT_PARAM_ONOFF, true)
-			--VeigarConfig.combo:addParam("AAtcount", "Don't AA if > x champions around", SCRIPT_PARAM_SLICE, 1, 1, 5, 0)
-			--VeigarConfig.combo:addParam("AAtrange", "Don't AA if > x enemies in range", SCRIPT_PARAM_SLICE, 1500, 5, 1525, 0)
+			
 		VeigarConfig.combo:addParam("table","------------------Combos--------------",SCRIPT_PARAM_INFO,"")
 			VeigarConfig.combo:addParam("lightcombo", "Light Combo E+W+Q", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
 			VeigarConfig.combo:addParam("wasteall", "Cast everything in target", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
@@ -210,8 +220,8 @@ function OnLoad()
 			VeigarConfig.ew:addParam("addq", "use Q in E+W Combo", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addParam("forcestun", "Always cast E(even for Q+R kill)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addParam("stuntt", "Stun Enemies attacked by turret", SCRIPT_PARAM_ONOFF, true)
-			--VeigarConfig.ew:addParam("stunall", "W on any stunned enemy", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addParam("interrupt", "Use E to interrupt channeled ultimates", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.ew:addParam("stuntp", "Use E on End Position of TP spells[TEST]", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addSubMenu("Interrupt list", "List")
 			for i, spell in ipairs(InterruptList) do 
 			VeigarConfig.ew.List:addParam(spell, "Interrupt "..spell, SCRIPT_PARAM_ONOFF, true)
@@ -230,6 +240,7 @@ function OnLoad()
 				
 		VeigarConfig.draw:addParam("table1","------------------Enemies Related-------------",SCRIPT_PARAM_INFO,"")
 			VeigarConfig.draw:addParam("drawvar", "Select drawings location", SCRIPT_PARAM_LIST, 1, { "Near HP bar", "In the middle of a champ"})
+			VeigarConfig.draw:addParam("warnab", "Warn if E stun < W cast time", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.draw:addParam("targg", "Mark Target with circle", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.draw:addParam("targ", "Draw line to Target(for team fights)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.draw:addParam("ExtraInfo", "Draw best combo for kill", SCRIPT_PARAM_ONOFF, true)
@@ -262,17 +273,12 @@ function OnLoad()
 	
 	VeigarConfig:addSubMenu("Life Saver","LifeSaver")
 		VeigarConfig.LifeSaver:addParam("LifeSaver", "Stun enemies Who come too close", SCRIPT_PARAM_ONOFF, false)
-		
 		VeigarConfig.LifeSaver:addSubMenu("Anti-Gap closer settings", "listSub")
-		
-		VeigarConfig.LifeSaver.listSub:addParam("gapc", "Stun enemies who use gap closers", SCRIPT_PARAM_ONOFF, false)
-		
+		VeigarConfig.LifeSaver.listSub:addParam("gapc", "Stun enemies who use gap closers[TEST]", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver.listSub:addParam("gapcr", "Range in which stun gapc users", SCRIPT_PARAM_SLICE, 650, 10, 1000, 0)
-		
 			for _, enemy in ipairs(GetEnemyHeroes()) do
 				VeigarConfig.LifeSaver.listSub:addParam(enemy.charName, "Use AntiGapClose on:"..enemy.charName, SCRIPT_PARAM_ONOFF, true)
 			end
-		
 		VeigarConfig.LifeSaver:addParam("LifeSaverRange","Range of LifeSaver", SCRIPT_PARAM_SLICE, 400, 1, 800, 0)
 		VeigarConfig.LifeSaver:addParam("usew", "Use W on emeies caught in LifeSaver", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver:addParam("zwsave", "Auto activate Zhonyas/Wooglets/Seraph", SCRIPT_PARAM_ONOFF, false)
@@ -311,7 +317,6 @@ function OnLoad()
 		NSOW:LoadToMenu(VeigarConfig.OrbWalking)
 	startsprite = GetWebSprite("http://puu.sh/be5pB/4f7556bc18.png")	
 end
-
 function _drawstartsprite()
     if startsprite and GetInGameTimer() >= 1 and GetInGameTimer() <= 20 then        
         local chPos = WorldToScreen(D3DXVECTOR3(myHero.x, myHero.y, myHero.z))    
@@ -428,21 +433,22 @@ function OnProcessSpell(unit, spell)
 end
 
 function OnProcessSpell(unit, spell)
-if VeigarConfig.LifeSaver.listSub.gapc then
-	if AGCSPELLS[spell.name] and unit.team ~= myHero.team and VeigarConfig.LifeSaver.listSub[unit.charName] then
-		local dist = GetDistance(unit, myHero)
-		if dist < VeigarConfig.LifeSaver.listSub.gapcr then
-			if unit then 
-			l = 1
-				--CastSpell(_E, spell.endPos.x, spell.endPos.z)
-			lx = spell.endPos.x
-			lz = spell.endPos.z
-			if VeigarConfig.LifeSaver.listSub.gapc then
-			castESpellOnTarget(unit)
-			end
-			end
+	if VeigarConfig.ew.interrupt and E ~= 0 then
+		if VeigarConfig.ew.List[spell.name] and unit.team ~= myHero.team then
+			if (eradius + erange) >= GetDistance(unit) then
+				ProdictionECallback(Vector(unit.x, 0, unit.z), Vector(unit.x, 0, unit.z), _E)
+				PrintChat("<font color=\"#FF0000\">Trying to interrupt: " .. spell.name.."</font>")
+			end 
 		end
 	end
+	
+	if VeigarConfig.ew.stuntp and TELESPELLS[spell.name] and unit.team ~= myHero.team and GetDistanceSqr(myHero, spell.endPos) <= 1000 then
+			f = 1
+			fx = spell.endPos.x
+			fz = spell.endPos.z
+			if VeigarConfig.ew.stuntp then
+			castESpellOnTarget(unit)
+			end
 	end
 end
 --[[
@@ -941,7 +947,6 @@ function ExtraInformation()
 				local HPBARM = GetHPBarPos(myHero)
 				if ftarg ~= nil then DrawText("Lock on:"..ftarg.charName.."",15, HPBARM.x - 76, HPBARM.y - 5,RGB(55, 255, 55)) end 
 				if VeigarConfig.draw.MainCalc then if enemy.health <= dd then DrawText(""..math.floor((dd - enemy.health)+0.5).." Extra !!",20, HPBAR.x - 127, HPBAR.y - 3,RGB(255, 0, 0)) else DrawText(""..math.floor((enemy.health - dd)+0.5).." More !!",20, HPBAR.x - 127, HPBAR.y - 3,RGB(255, 255, 255)) end end
-				
 				if kill == 1 then
 				DrawText(""..enemy.charName.." Killable with:",20, HPBAR.x - 127, HPBAR.y - 55,RGB(255, 255, 255))
 				if ftarg ~= nil and enemy == ftarg then DrawText("(L)",20, HPBAR.x - 150, HPBAR.y - 55,RGB(51, 250, 51)) end
@@ -956,9 +961,47 @@ function ExtraInformation()
 				if ftarg ~= nil then DrawText("Lock on:"..ftarg.charName.."",15, HPBARM.x - 76, HPBARM.y - 5,RGB(55, 255, 55)) end 
 				if VeigarConfig.draw.MainCalc then if enemy.health <= dd then DrawText3D(""..math.floor((dd - enemy.health)+0.5).." Extra !!", enemy.x, enemy.y, enemy.z, 25, RGB(255, 0, 0), true) else DrawText3D(""..math.floor((enemy.health - dd)+0.5).." More !!", enemy.x, enemy.y, enemy.z, 25, RGB(255, 255, 255), true) end end
 				end
+				--[[
+				local TenacityItems = nil
+				--local TenacitySkills = nil
+				--local TenacityMasteries = nil
+				local TenacityFull = nil
+				if GetInventoryHaveItem(3111, enemy) == true or GetInventoryHaveItem(3170, enemy) == true or GetInventoryHaveItem(3172, enemy) == true then
+				TenacityItems = 35
+				end
+				TenacityFull = TenacityItems
+				if TenacityFull ~= nil then tenff = TenacityFull tenvar = 1 else tenff = 0 tenvar = 0 end
+				if tenvar ~= nil and not myHero:GetSpellData(_E).level == 0 and not myHero:GetSpellData(_W).level == 0 then if getelvl() < 1.5 then DrawText("Warn:E<W",15, HPBAR.x - 127, HPBAR.y + 12,RGB(255, 0, 0)) end end
+				DrawText("Warn:E<W("..getelvl()..")",15, HPBAR.x - 127, HPBAR.y + 12,RGB(255, 0, 0))
+				]]
+				if VeigarConfig.draw.warnab then
+					if GetInventoryHaveItem(3111, enemy) == true or GetInventoryHaveItem(3170, enemy) == true or GetInventoryHaveItem(3172, enemy) == true then
+						if myHero:GetSpellData(_E).level ~= nil and myHero:GetSpellData(_W).level ~= nil then 
+							if getelvl() < 1.25 then
+								DrawText("Warn:E<W("..getelvl()..")s",15, HPBAR.x - 127, HPBAR.y + 12,RGB(255, 0, 0))
+							end
+						end
+					end
+				end
 			end
 		end
 	end
+end
+
+function getelvl()
+local am = 0
+if myHero:GetSpellData(_E).level == 1 then
+am = 1
+elseif myHero:GetSpellData(_E).level == 2 then
+am = 1.1
+elseif myHero:GetSpellData(_E).level == 3 then
+am = 1.3
+elseif myHero:GetSpellData(_E).level == 4 then
+am = 1.5
+elseif myHero:GetSpellData(_E).level == 5 then
+am = 1.6
+end
+return am
 end
 
 function autoFarm()
