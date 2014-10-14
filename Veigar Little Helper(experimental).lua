@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.9
+local version = 2.91
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -370,7 +370,6 @@ function OnTick()
 end
 
 function OnDraw()
-	_drawstartsprite()
 	ManaRegenSec()
 	if not myHero.dead or VeigarConfig.other.Death then
 		DamageCalculator()
