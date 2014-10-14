@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 2.8
+local version = 2.9
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
@@ -27,6 +27,11 @@ local rtarg = nil
 local m = nil
 local lx = nil
 local lz = nil
+local ftarget = nil
+local tt = nil
+local dd = nil
+local tenff = nil
+local tenvar = nil
 --[KEYS]--
 local autoFarmKey = string.byte("J")
 local AutoBuy = string.byte("P")
@@ -144,10 +149,48 @@ local AGCLIST = {
 	["Zac"] = {gcName = "ZacE"},
 }
 
+local CCBUFFS = {
+	["aatroxqknockup"] = true,
+	["ahriseducedoom"] = true,
+	["powerfistslow"] = true,
+	["braumstundebuff"] = true,
+	["rupturetarget"] = true,
+	["EliseHumanE"] = true,
+	["Flee"] = true,
+	["HowlingGaleSpell"] = true,
+	["jarvanivdragonstrikeph2"] = true,
+	["karmaspiritbindroot"] = true,	
+	["LuxLightBindingMis"] = true,
+	["lissandrawfrozen"] = true,
+	["maokaiunstablegrowthroot"] = true,
+	["DarkBindingMissile"] = true,
+	["namiqdebuff"] = true,
+	["nautilusanchordragroot"] = true,
+	["RunePrison"] = true,
+	["Taunt"] = true,
+	["Stun"] = true,
+	["swainshadowgrasproot"] = true,
+	["threshqfakeknockup"] = true,
+	["velkozestun"] = true,
+	["virdrunkstun"] = true,
+	["viktorgravitationfieldstun"] = true,
+	["supression"] = true,
+	["yasuoq3mis"] = true,
+	["zyragraspingrootshold"] = true,
+	["VeigarStun"] = true,
+}
+
 local AGCSPELLS = {
 	["SummonerFlash"] = true,
 }
 
+local TELESPELLS = {
+	["PantheonRFall"] = true,
+	--["LeblancSlide"] = true,
+	--["LeblancSlideM"] = true,
+	["gate"] = true,
+	["Crowstorm"] = true,
+}	
 --[Interuptions]--
 	local InterruptList = {"CaitlynAceintheHole", "Crowstorm", "DrainChannel", "GalioIdolOfDurand", "KatarinaR", "InfiniteDuress", "AbsoluteZero", "MissFortuneBulletTime", "AlZaharNetherGrasp", "DariusExecute", "AhriTumble", "FallenOne", "LucianR", "SoulShackles", "UndyingRage", "GrandSkyfall", "VolibearQ", "MonkeyKingSpinToWin", "XerathLocusOfPower2", "ZacR"}
 --[MAIN PART]
@@ -172,6 +215,7 @@ function OnLoad()
 			VeigarConfig.combo.autokillf:addParam("useign", "Use IGN", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveab", "Don't waste spells if OverDmg is > than", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo.autokillf:addParam("saveabsl", "OverDamage config ", SCRIPT_PARAM_SLICE, 1, 1, 1000, 0)
+			
 	VeigarConfig.combo:addSubMenu("Movement Settings","moveset")
 				VeigarConfig.combo.moveset:addParam("allturn", "Turn everything ON/OFF", SCRIPT_PARAM_ONOFF, false)
 				VeigarConfig.combo.moveset:addParam("WALKtcount", "Don't Move if > x champions around", SCRIPT_PARAM_SLICE, 3, 1, 5, 0)
@@ -183,6 +227,7 @@ function OnLoad()
 				VeigarConfig.combo.moveset:addParam("combo5", "Select for StunClosest", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
 				VeigarConfig.combo.moveset:addParam("combo6", "Select for E+W", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
 				VeigarConfig.combo.moveset:addParam("combo7", "Select for Q harras", SCRIPT_PARAM_LIST, 1, { "Move To Mouse","None"})
+				
 		VeigarConfig.combo:addParam("table","------------------Settings--------------",SCRIPT_PARAM_INFO,"")	
 			if VIP_USER then VeigarConfig.combo:addParam("packet", "Use Packets to Cast Skills", SCRIPT_PARAM_ONOFF, false) end
 			VeigarConfig.combo:addParam("savedfg", "Only use DFG in biggest combos", SCRIPT_PARAM_ONOFF, false)
@@ -190,24 +235,26 @@ function OnLoad()
 			VeigarConfig.combo:addParam("ShowCombo", "Show current spacebar combo(target)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("tryq", "Always try to lasthit enemy with Q", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("forceaa", "AA after combo(RECOMMENDED)", SCRIPT_PARAM_ONOFF, true)
-			VeigarConfig.combo:addParam("newts", "Left Click LOCK Target", SCRIPT_PARAM_ONOFF, false)	
-			--VeigarConfig.combo:addParam("AAtcount", "Don't AA if > x champions around", SCRIPT_PARAM_SLICE, 1, 1, 5, 0)
-			--VeigarConfig.combo:addParam("AAtrange", "Don't AA if > x enemies in range", SCRIPT_PARAM_SLICE, 1500, 5, 1525, 0)
+			VeigarConfig.combo:addParam("wf", "Always use W first", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.combo:addParam("newts", "Left Click LOCK Target", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.combo:addParam("newtsr", "Auto remove lock from dead target", SCRIPT_PARAM_ONOFF, true)
+			
 		VeigarConfig.combo:addParam("table","------------------Combos--------------",SCRIPT_PARAM_INFO,"")
 			VeigarConfig.combo:addParam("lightcombo", "Light Combo E+W+Q", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
 			VeigarConfig.combo:addParam("wasteall", "Cast everything in target", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
 			VeigarConfig.combo:addParam("spacebarActive", "SpaceToWin(SmartCombo)", SCRIPT_PARAM_ONKEYDOWN, false, spaceHK)
 	
 	VeigarConfig:addSubMenu("E and W","ew")
-			VeigarConfig.ew:addParam("stunv", "Select E logic", SCRIPT_PARAM_LIST, 1, { "Standart", "Alternative","Alternative 2"})
+			VeigarConfig.ew:addParam("stunv", "Select E logic", SCRIPT_PARAM_LIST, 3, { "Logic A", "Logic B","Logic C"})
 			VeigarConfig.ew:addParam("eCastActive", "Use E+W", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("E"))
 			VeigarConfig.ew:addParam("cageTeamActive", "Cage Team", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
 			VeigarConfig.ew:addParam("stuncl", "Stun Closest Enemy", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("A"))
 			VeigarConfig.ew:addParam("addq", "use Q in E+W Combo", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addParam("forcestun", "Always cast E(even for Q+R kill)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addParam("stuntt", "Stun Enemies attacked by turret", SCRIPT_PARAM_ONOFF, true)
-			VeigarConfig.ew:addParam("stunall", "W on any stunned enemy", SCRIPT_PARAM_ONOFF, false)
+			VeigarConfig.ew:addParam("wppl", "Use W on any CC'ed enemies", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addParam("interrupt", "Use E to interrupt channeled ultimates", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.ew:addParam("stuntp", "Use E on End Position of TP spells[TEST]", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addSubMenu("Interrupt list", "List")
 			for i, spell in ipairs(InterruptList) do 
 			VeigarConfig.ew.List:addParam(spell, "Interrupt "..spell, SCRIPT_PARAM_ONOFF, true)
@@ -225,7 +272,8 @@ function OnLoad()
 			VeigarConfig.draw:addParam("LifeSaverRange", "Draw LifeSaver range", SCRIPT_PARAM_ONOFF, true)
 				
 		VeigarConfig.draw:addParam("table1","------------------Enemies Related-------------",SCRIPT_PARAM_INFO,"")
-		
+			VeigarConfig.draw:addParam("drawvar", "Select drawings location", SCRIPT_PARAM_LIST, 1, { "Near HP bar", "In the middle of a champ"})
+			VeigarConfig.draw:addParam("warnab", "Warn if E stun < W cast time", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.draw:addParam("targg", "Mark Target with circle", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.draw:addParam("targ", "Draw line to Target(for team fights)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.draw:addParam("ExtraInfo", "Draw best combo for kill", SCRIPT_PARAM_ONOFF, true)
@@ -258,17 +306,12 @@ function OnLoad()
 	
 	VeigarConfig:addSubMenu("Life Saver","LifeSaver")
 		VeigarConfig.LifeSaver:addParam("LifeSaver", "Stun enemies Who come too close", SCRIPT_PARAM_ONOFF, false)
-		
 		VeigarConfig.LifeSaver:addSubMenu("Anti-Gap closer settings", "listSub")
-		
-		VeigarConfig.LifeSaver.listSub:addParam("gapc", "Stun enemies who use gap closers", SCRIPT_PARAM_ONOFF, false)
-		
+		VeigarConfig.LifeSaver.listSub:addParam("gapc", "Stun enemies who use gap closers[TEST]", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver.listSub:addParam("gapcr", "Range in which stun gapc users", SCRIPT_PARAM_SLICE, 650, 10, 1000, 0)
-		
 			for _, enemy in ipairs(GetEnemyHeroes()) do
 				VeigarConfig.LifeSaver.listSub:addParam(enemy.charName, "Use AntiGapClose on:"..enemy.charName, SCRIPT_PARAM_ONOFF, true)
 			end
-		
 		VeigarConfig.LifeSaver:addParam("LifeSaverRange","Range of LifeSaver", SCRIPT_PARAM_SLICE, 400, 1, 800, 0)
 		VeigarConfig.LifeSaver:addParam("usew", "Use W on emeies caught in LifeSaver", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.LifeSaver:addParam("zwsave", "Auto activate Zhonyas/Wooglets/Seraph", SCRIPT_PARAM_ONOFF, false)
@@ -285,7 +328,7 @@ function OnLoad()
 		VeigarConfig.other:addParam("AutoBuy", "Buy Starting Items", SCRIPT_PARAM_ONKEYDOWN, false, AutoBuy)
 		VeigarConfig.other:addParam("Autolvl", "Auto level up skills", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("lvlup", "Select skill sequence", SCRIPT_PARAM_LIST, 1, { "Q>W>E", "W>Q>E", "W>E>Q" })
-		VeigarConfig.other:addParam("autoW", "Auto W Stunned Enemies", SCRIPT_PARAM_ONOFF, false)
+		--VeigarConfig.other:addParam("autoW", "Auto W Stunned Enemies", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("Death", "Show Info After Death", SCRIPT_PARAM_ONOFF, false)
 		VeigarConfig.other:addParam("tsremove", "Remove Current Lock", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("L"))
 	
@@ -305,14 +348,6 @@ function OnLoad()
 	VeigarConfig:addTS(ts)
 	VeigarConfig:addSubMenu("["..myHero.charName.." - OrbWalking]", "OrbWalking")
 		NSOW:LoadToMenu(VeigarConfig.OrbWalking)
-	startsprite = GetWebSprite("http://puu.sh/be5pB/4f7556bc18.png")	
-end
-
-function _drawstartsprite()
-    if startsprite and GetInGameTimer() >= 1 and GetInGameTimer() <= 20 then        
-        local chPos = WorldToScreen(D3DXVECTOR3(myHero.x, myHero.y, myHero.z))    
-        startsprite:Draw(WINDOW_W*0.83, WINDOW_H*0.33, 255)        
-    end
 end
 
 function OnTick()
@@ -345,6 +380,48 @@ function OnDraw()
 end
 
 --[END OF THE MAIN PART]
+
+local NegativBuffTypes = {
+			[5] = true, --stun
+}
+function OnGainBuff(unit, buff) --vip only
+	if unit and unit.valid and BuffIsValid(buff) and NegativBuffTypes[buff.type] and unit.type == myHero.type and unit.team ~= myHero.team then
+		if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
+			if rtarg ~= nil and unit.name == rtarg.name then
+				if not VeigarConfig.ew.wppl then ProdictionWCallback(unit, unit, _W) else if IsOnCC(unit) then ProdictionWCallback(unit, unit, _W) end end
+			end
+		end
+	end
+end
+
+function IsOnCC(target)
+	assert(type(target) == 'userdata', "IsOnCC: Wrong type. Expected userdata got: "..tostring(type(target)))
+	for i  =  1, target.buffCount do
+		tBuff = target:getBuff(i)
+		if VeigarConfig.ew.wppl then
+		if BuffIsValid(tBuff) and CCBUFFS[tBuff.name] then
+			return true
+		end
+		else
+		if BuffIsValid(tBuff) and tBuff.name == "VeigarStun" then
+			return true
+		end
+		end
+	end
+	return false
+end
+
+function freecheck()
+	for i, enemy in ipairs(GetEnemyHeroes())  do
+		if IsOnCC(enemy) then
+			if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
+				if rtarg ~= nil and enemy.name == rtarg.name and IsOnCC(rtarg) then
+					ProdictionWCallback(enemy, enemy, _W)
+				end
+			end
+		end
+	end
+end
 
 function GetHPBarPos(enemy)
 	enemy.barData = {PercentageOffset = {x = -0.05, y = 0}}
@@ -391,15 +468,14 @@ function OnWndMsg(Msg, Key)
 			end
 		end
 		if starget and minD < 500 and not MouseOnMinimap() then
-			if starg and starget.charName == starg.charName then
-				starg = nil
+			if ftarg ~= nil and starget.charName == ftarg.charName then
+				ftarg = nil
 			else
-				starg = starget
+				ftarg = starget
 			end
 		end
 	end
 end
-
 function skinChanged()
 	return VeigarConfig.other.skin1 ~= lastSkin
 end
@@ -422,129 +498,23 @@ function OnProcessSpell(unit, spell)
 			end 
 		end
 	end
-end
-
-function OnProcessSpell(unit, spell)
-if VeigarConfig.LifeSaver.listSub.gapc then
-	if AGCSPELLS[spell.name] and unit.team ~= myHero.team and VeigarConfig.LifeSaver.listSub[unit.charName] then
-		local dist = GetDistance(unit, myHero)
-		if dist < VeigarConfig.LifeSaver.listSub.gapcr then
-			if unit then 
-			l = 1
-				--CastSpell(_E, spell.endPos.x, spell.endPos.z)
-			lx = spell.endPos.x
-			lz = spell.endPos.z
-			if VeigarConfig.LifeSaver.listSub.gapc then
+	
+	if VeigarConfig.ew.stuntp and TELESPELLS[spell.name] and unit.team ~= myHero.team and GetDistanceSqr(myHero, spell.endPos) <= 1000 then
+			f = 1
+			fx = spell.endPos.x
+			fz = spell.endPos.z
+			if VeigarConfig.ew.stuntp then
 			castESpellOnTarget(unit)
 			end
-			end
-		end
 	end
-	end
-end
---[[
-function CheckStunnedTargets()
-	for i, enemy in ipairs(GetEnemyHeroes())  do
-		if enemy.canMove ~= true then
-			if VeigarConfig.ew.stunall then
-				if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
-					if rtarg ~= nil and enemy.name == rtarg.name then
-						ProdictionWCallback(enemy, enemy, _W)
-					else
-						ProdictionWCallback(enemy, enemy, _W)
-					end
-				elseif VeigarConfig.LifeSaver.usew then
-					if rtarg ~= nil and enemy.name == rtarg.name then
-						ProdictionWCallback(enemy, enemy, _W)
-					end
-				end
-			end
-		end
-	end
-end
-
-
-function OnGainBuff(unit, buff)
-	if unit.team ~= myHero.team and stunList[unit.charName] == buff.name then
-	PrintChat("OMG")
-			if VeigarConfig.ew.stunall then
-				if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
-					if rtarg ~= nil and enemy.name == rtarg.name then
-						ProdictionWCallback(enemy, enemy, _W)
-					else
-						ProdictionWCallback(enemy, enemy, _W)
-					end
-				elseif VeigarConfig.LifeSaver.usew then
-					if rtarg ~= nil and enemy.name == rtarg.name then
-						ProdictionWCallback(enemy, enemy, _W)
-					end
-				end
-			end
-	end
-	end
-	
-]]
-
-function freecheck()
-	function freecheck()
-		for i, enemy in ipairs(GetEnemyHeroes())  do
-			if enemy == rtarg and rtarg ~= nil then
-				if TargetHaveBuff("VeigarStun", enemy) then
-					if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
-						if rtarg ~= nil and enemy.name == rtarg.name then
-							ProdictionWCallback(enemy, enemy, _W)
-						end
-					end
-				end
-			end
-		end
-	end
-end
-
---[[
-stunList = {
- ["VeigarStun"] = true
-}
-function OnGainBuff(unit, buff)
-	if unit.team ~= myHero.team and stunList[buff.name] then
-					if VeigarConfig.ew.stunall then
-					if VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.combo.spacebarActive or VeigarConfig.ew.cageTeamActive or VeigarConfig.ew.eCastActive then
-						if rtarg ~= nil and unit.name == rtarg.name then
-							ProdictionWCallback(unit, unit, _W)
-						else
-							ProdictionWCallback(unit, unit, _W)
-						end
-					elseif VeigarConfig.LifeSaver.usew then
-						if rtarg ~= nil and unit.name == rtarg.name then
-							ProdictionWCallback(unit, unit, _W)
-						end
-					end
-				end
-		end
-	end
-]]
-function interupt()
-    if E == 1 then
-        for i, spell in ipairs(spells) do
-            if VeigarConfig.ew.AutoInterrupt[spell.name] then
-                for j, LastCast in pairs(LastCastedSpell) do
-                    if LastCast.name == spell.name:lower() and (os.clock() - LastCast.time) < 3 and GetDistance(LastCast.caster, myHero) < (erange + eradius) and ValidTarget(LastCast.caster) then
-                         UseSpell(_E,LastCast.caster)
-                        break
-                    end
-                end
-            end
-        end
-    end
 end
 
 function performLightCombo()
 int6 = 1
 		targ = rtarg
 		UseSpell(_E, targ)
-		UseSpell(_Q, targ)
+		if VeigarConfig.combo.wf then if W ~= 1 then UseSpell(_Q, targ) end else UseSpell(_Q, targ) end
 		if Q == 0 then int6 = 0 end
-		--if VeigarConfig.combo.forceaa then aa() end
 end
 
 function aa()
@@ -601,16 +571,7 @@ function DamageCalculator()
 			
 			if ignitos ~= 0 then DMG = DMG + IGNITEdmg end
 			end
-
-				if enemy.health <= DMG then
-				DrawText3D(""..math.floor((DMG - enemy.health)+0.5).." Extra !!", enemy.x, enemy.y, enemy.z, 25, RGB(255, 0, 0), true)
-				--local HPBAR = GetHPBarPos(enemy)
-				--DrawText(""..math.floor((DMG - enemy.health)+0.5).." Extra !!",20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
-				else
-				DrawText3D(""..math.floor((enemy.health - DMG)+0.5).." More !!", enemy.x, enemy.y, enemy.z, 25, RGB(255, 255, 255), true)
-				--local HPBAR = GetHPBarPos(enemy)
-				--DrawText(""..math.floor((enemy.health - DMG)+0.5).." More !!",20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
-				end
+			dd = DMG
 			end
 		end
 	end
@@ -755,146 +716,239 @@ function ExtraInformation()
 				if ignitos ~= 0 then IGNITEdmg = 50 + 20 * myHero.level end
 				if DFGI ~= 0 then DFGdmg = getDmg("DFG", enemy ,myHero) end
 				local HPBAR = GetHPBarPos(enemy)
-				
-				if rtarg ~= nil and enemy.charName == rtarg.charName then
-				if kill == 1 then
-				DrawText(""..enemy.charName.." Killable with:",20, HPBAR.x - 127, HPBAR.y - 65,RGB(255, 255, 255))
-				DrawText("(L)",20, HPBAR.x - 150, HPBAR.y - 65,RGB(51, 250, 51))
-				elseif kill == 0 then
-				DrawText(""..enemy.charName.." Unkillable",20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
-				DrawText("(L)",20, HPBAR.x - 150, HPBAR.y - 45,RGB(51, 250, 51))
-				end
-				--DrawText3D(("L IS ON"), myHero.x, myHero.y + 120, myHero.z, 20, RGB(255, 255, 255), true) 
-				elseif ts.target ~= nil and enemy.name == ts.target.name then
-				if kill == 1 then
-				DrawText(""..enemy.charName.." Unkillable",20, HPBAR.x - 127, HPBAR.y - 65,RGB(255, 255, 255))
-				DrawText("(T)",20, HPBAR.x - 150, HPBAR.y -65,RGB(255, 0, 0))
-				elseif kill == 0 then
-				DrawText(""..enemy.charName.." Killable with:",20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
-				DrawText("(T)",20, HPBAR.x - 150, HPBAR.y - 45,RGB(255, 0, 0))
-				end
-				else
-				if kill == 1 then
-				DrawText(""..enemy.charName.." Killable with:",20, HPBAR.x - 127, HPBAR.y - 65,RGB(255, 255, 255))
-				elseif kill == 0 then
-				DrawText(""..enemy.charName.." Unkillable",20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
-				end
-				--DrawText(""..enemy.charName.." Killable with:",20, HPBAR.x - 127, HPBAR.y - 65,RGB(255, 255, 255))
-				end
-				
+				if VeigarConfig.draw.drawvar == 1 then
 				if (enemy.health < (Qdmg) and Q ~= 0 ) then																																							--Q
-					--DrawText3D(("Q"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255)) 
-					DrawText("Q",20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText("Q",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					elseif (enemy.health < (Qdmg + AAdmg) and Q ~= 0 ) then																																			--Q+AA
-					DrawText(("Q+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																															--DFG Q
-					DrawText(("|DFG|Q"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																													--DFG Q+AA
-					DrawText(("|DFG|Q+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health <= (Wdmg ) and W ~= 0 and E ~= 0) then																																		--W
-					DrawText(("W"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("W"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health <= (Wdmg + AAdmg) and W ~= 0 and E ~= 0) then																																--W+AA
-					DrawText(("W+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("W+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health <= (Wdmg + DFGdmg ) and W ~= 0 and E ~= 0 and DFGI ~= 0) then																												--DFG W	
-					DrawText(("|DFG|W"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|W"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health <= (Wdmg + DFGdmg + AAdmg) and W ~= 0 and E ~= 0 and DFGI ~= 0) then																										--DFG W+AA
-					DrawText(("|DFG|W+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|W+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health <= (IGNITEdmg) and ignitos ~= 0) then																																		--IGN
-					DrawText(("IGN"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health <= (IGNITEdmg + AAdmg) and ignitos ~= 0) then																																--IGN+AA
-					DrawText(("IGN+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg + Wdmg ) and Q ~= 0 and W ~= 0 ) then 																																--Q+W
-					DrawText(("Q+W"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+W"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg + Wdmg + AAdmg) and Q ~= 0 and W ~= 0 ) then 																														--Q+W+AA
-					DrawText(("Q+W+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+W+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + Wdmgi  + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0) then 																										--DFG Q+W
-					DrawText(("|DFG|Q+W"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+W"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + Wdmgi + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0) then 																								--DFG Q+W+AA
-					DrawText(("|DFG|Q+W+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+W+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg + Wdmg + IGNITEdmg ) and Q ~= 0 and W ~= 0 and ignitos ~= 0 ) then																									--Q+W+IGN
-					DrawText(("Q+W+IGN"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+W+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg + Wdmg + IGNITEdmg + AAdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 ) then																							--Q+W+IGN+AA
-					DrawText(("Q+W+IGN+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+W+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + Wdmgi + IGNITEdmg  + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																			--DFG Q+W+IGN
-					DrawText(("|DFG|Q+W+IGN"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+W+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + Wdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																	--DFG Q+W+IGN+AA
-					DrawText(("|DFG|Q+W+IGN+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+W+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Rdmg ) and R ~= 0) then																																					--R
-					DrawText(("R"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("R"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Rdmg + AAdmg) and R ~= 0) then																																			--R+AA
-					DrawText(("R+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("R+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg  + Rdmg) and Q ~= 0 and R ~= 0 ) then																																--Q+R
-					DrawText(("Q+R"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+R"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 ) then																														--Q+R+AA
-					DrawText(("Q+R+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+R+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi  + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																										--DFG Q+R
-					DrawText(("|DFG|Q+R"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+R"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																								--DFG Q+R+AA
-					DrawText(("|DFG|Q+R+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+R+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg + IGNITEdmg  + Rdmg) and Q ~= 0 and R ~= 0 and ignitos ~= 0 ) then																									--Q+R+IGN
-					DrawText(("Q+R+IGN"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))		
+					DrawText(("Q+R+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))		
 					kill = 1
 					elseif (enemy.health < (Qdmg + IGNITEdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 and ignitos ~= 0 ) then																							--Q+R+IGN+AA
-					DrawText(("Q+R+IGN+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+R+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + IGNITEdmg  + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																			--DFG Q+R+IGN
-					DrawText(("|DFG|Q+R+IGN"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+R+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + IGNITEdmg + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																	--DFG Q+R+IGN+AA
-					DrawText(("|DFG|Q+R+IGN+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+R+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg + Wdmg + Rdmg  ) and Q ~= 0 and W ~= 0 and R ~= 0 ) then																											--Q+W+R
-					DrawText(("Q+W+R"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+W+R"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + AAdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 ) then																									--Q+W+R+AA
-					DrawText(("Q+W+R+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+W+R+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi  + DFGdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and DFGI ~= 0) then																					--DFG Q+W+R
-					DrawText(("|DFG|Q+W+R"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+W+R"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + AAdmg + DFGdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and DFGI ~= 0) then																			--DFG Q+W+R+AA
-					DrawText(("|DFG|Q+W+R+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+W+R+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + IGNITEdmg  ) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 ) then																				--Q+W+R+IGN
-					DrawText(("Q+W+R+IGN"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+W+R+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + IGNITEdmg + AAdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 ) then																		--Q+W+R+IGN+AA
-					DrawText(("Q+W+R+IGN+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("Q+W+R+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg  + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then														--DFG Q+W+R+IGN
-					DrawText(("|DFG|Q+W+R+IGN"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
+					DrawText(("|DFG|Q+W+R+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then												--DFG Q+W+R+IGN+AA
-					DrawText(("|DFG|Q+W+R+IGN+AA"),20, HPBAR.x - 127, HPBAR.y - 45,RGB(255, 255, 255))
-					elseif (enemy.health > (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg)) then																												--unkillable
+					DrawText(("|DFG|Q+W+R+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
+					else
 					kill = 0
+				end
+				else
+				if (enemy.health < (Qdmg) and Q ~= 0 ) then																																							--Q
+					DrawText3D(("Q"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true) 
+					elseif (enemy.health < (Qdmg + AAdmg) and Q ~= 0 ) then																																			--Q+AA
+					DrawText3D(("Q+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true) 
+					elseif (enemy.health < (Qdmgi + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																															--DFG Q
+					DrawText3D(("|DFG|Q"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																													--DFG Q+AA
+					DrawText3D(("|DFG|Q+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (Wdmg ) and W ~= 0 and E ~= 0) then																																		--W
+					DrawText3D(("W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (Wdmg + AAdmg) and W ~= 0 and E ~= 0) then																																--W+AA
+					DrawText3D(("W+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (Wdmg + DFGdmg ) and W ~= 0 and E ~= 0 and DFGI ~= 0) then																												--DFG W	
+					DrawText3D(("|DFG|W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (Wdmg + DFGdmg + AAdmg) and W ~= 0 and E ~= 0 and DFGI ~= 0) then																										--DFG W+AA
+					DrawText3D(("|DFG|W+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (IGNITEdmg) and ignitos ~= 0) then																																		--IGN
+					DrawText3D(("IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health <= (IGNITEdmg + AAdmg) and ignitos ~= 0) then																																--IGN+AA
+					DrawText3D(("IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg ) and Q ~= 0 and W ~= 0 ) then 																																--Q+W
+					DrawText3D(("Q+W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + AAdmg) and Q ~= 0 and W ~= 0 ) then 																														--Q+W+AA
+					DrawText3D(("Q+W+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi  + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0) then 																										--DFG Q+W
+					DrawText3D(("|DFG|Q+W"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and DFGI ~= 0) then 																								--DFG Q+W+AA
+					DrawText3D(("|DFG|Q+W+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + IGNITEdmg ) and Q ~= 0 and W ~= 0 and ignitos ~= 0 ) then																									--Q+W+IGN
+					DrawText3D(("Q+W+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + IGNITEdmg + AAdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 ) then																							--Q+W+IGN+AA
+					DrawText3D(("Q+W+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + IGNITEdmg  + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																			--DFG Q+W+IGN
+					DrawText3D(("|DFG|Q+W+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																	--DFG Q+W+IGN+AA
+					DrawText3D(("|DFG|Q+W+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Rdmg ) and R ~= 0) then																																					--R
+					DrawText3D(("R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Rdmg + AAdmg) and R ~= 0) then																																			--R+AA
+					DrawText3D(("R+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg  + Rdmg) and Q ~= 0 and R ~= 0 ) then																																--Q+R
+					DrawText3D(("Q+R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 ) then																														--Q+R+AA
+					DrawText3D(("Q+R+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi  + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																										--DFG Q+R
+					DrawText3D(("|DFG|Q+R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and DFGI ~= 0) then																								--DFG Q+R+AA
+					DrawText3D(("|DFG|Q+R+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + IGNITEdmg  + Rdmg) and Q ~= 0 and R ~= 0 and ignitos ~= 0 ) then																									--Q+R+IGN
+					DrawText3D(("Q+R+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)		
+					elseif (enemy.health < (Qdmg + IGNITEdmg + AAdmg + Rdmg) and Q ~= 0 and R ~= 0 and ignitos ~= 0 ) then																							--Q+R+IGN+AA
+					DrawText3D(("Q+R+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + IGNITEdmg  + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																			--DFG Q+R+IGN
+					DrawText3D(("|DFG|Q+R+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + IGNITEdmg + AAdmg + DFGdmg + Rdmgi) and Q ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then																	--DFG Q+R+IGN+AA
+					DrawText3D(("|DFG|Q+R+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + Rdmg  ) and Q ~= 0 and W ~= 0 and R ~= 0 ) then																											--Q+W+R
+					DrawText3D(("Q+W+R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + AAdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 ) then																									--Q+W+R+AA
+					DrawText3D(("Q+W+R+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi  + DFGdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and DFGI ~= 0) then																					--DFG Q+W+R
+					DrawText3D(("|DFG|Q+W+R"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + AAdmg + DFGdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and DFGI ~= 0) then																			--DFG Q+W+R+AA
+					DrawText3D(("|DFG|Q+W+R+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + IGNITEdmg  ) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 ) then																				--Q+W+R+IGN
+					DrawText3D(("Q+W+R+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + IGNITEdmg + AAdmg ) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 ) then																		--Q+W+R+IGN+AA
+					DrawText3D(("Q+W+R+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg  + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then														--DFG Q+W+R+IGN
+					DrawText3D(("|DFG|Q+W+R+IGN"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then												--DFG Q+W+R+IGN+AA
+					DrawText3D(("|DFG|Q+W+R+IGN+AA"), enemy.x, enemy.y + 120, enemy.z, 20, RGB(255, 255, 255), true)
+					elseif (enemy.health > (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg) and Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0) then												--unkillable
+				end
+				
+				end
+				if VeigarConfig.draw.drawvar == 1 then
+				local HPBARM = GetHPBarPos(myHero)
+				if ftarg ~= nil then DrawText("Lock on:"..ftarg.charName.."",15, HPBARM.x - 76, HPBARM.y - 5,RGB(55, 255, 55)) end 
+				if VeigarConfig.draw.MainCalc then if enemy.health <= dd then DrawText(""..math.floor((dd - enemy.health)+0.5).." Extra !!",20, HPBAR.x - 127, HPBAR.y - 3,RGB(255, 0, 0)) else DrawText(""..math.floor((enemy.health - dd)+0.5).." More !!",20, HPBAR.x - 127, HPBAR.y - 3,RGB(255, 255, 255)) end end
+				if kill == 1 then
+				DrawText(""..enemy.charName.." Killable with:",20, HPBAR.x - 127, HPBAR.y - 55,RGB(255, 255, 255))
+				if ftarg ~= nil and enemy == ftarg then DrawText("(L)",20, HPBAR.x - 150, HPBAR.y - 55,RGB(51, 250, 51)) end
+				if tt ~= nil and enemy == tt then if enemy == ftarg then DrawText("(T)",20, HPBAR.x - 170, HPBAR.y - 60,RGB(255, 0, 0)) else DrawText("(T)",20, HPBAR.x - 150, HPBAR.y - 60,RGB(255, 0, 0)) end end
+				elseif kill == 0 then
+				DrawText(""..enemy.charName..": Unkillable",20, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
+				if ftarg ~= nil and enemy == ftarg then DrawText("(L)",20, HPBAR.x - 150, HPBAR.y - 40,RGB(51, 250, 51)) end
+				if tt ~= nil and enemy == tt then if enemy == ftarg then DrawText("(T)",20, HPBAR.x - 170, HPBAR.y - 40,RGB(255, 0, 0)) else DrawText("(T)",20, HPBAR.x - 150, HPBAR.y - 40,RGB(255, 0, 0)) end end
+				end
+				if VeigarConfig.draw.warnab then
+					if GetInventoryHaveItem(3111, enemy) == true or GetInventoryHaveItem(3170, enemy) == true or GetInventoryHaveItem(3172, enemy) == true then
+						if myHero:GetSpellData(_E).level ~= nil and myHero:GetSpellData(_W).level ~= nil then 
+							if getelvl() < 1.25 then
+								DrawText("Warn:E<W("..getelvl()..")s",15, HPBAR.x - 127, HPBAR.y + 12,RGB(255, 0, 0))
+							end
+						end
+					end
+				end				
+				else
+				local HPBARM = GetHPBarPos(myHero)
+				if ftarg ~= nil then DrawText("Lock on:"..ftarg.charName.."",15, HPBARM.x - 76, HPBARM.y - 5,RGB(55, 255, 55)) end 
+				if VeigarConfig.draw.MainCalc then if enemy.health <= dd then DrawText3D(""..math.floor((dd - enemy.health)+0.5).." Extra !!", enemy.x, enemy.y, enemy.z, 25, RGB(255, 0, 0), true) else DrawText3D(""..math.floor((enemy.health - dd)+0.5).." More !!", enemy.x, enemy.y, enemy.z, 25, RGB(255, 255, 255), true) end end
 				end
 			end
 		end
 	end
+end
+
+function getelvl()
+local am = 0
+if myHero:GetSpellData(_E).level == 1 then
+am = 1
+elseif myHero:GetSpellData(_E).level == 2 then
+am = 1.1
+elseif myHero:GetSpellData(_E).level == 3 then
+am = 1.3
+elseif myHero:GetSpellData(_E).level == 4 then
+am = 1.5
+elseif myHero:GetSpellData(_E).level == 5 then
+am = 1.6
+end
+return am
 end
 
 function autoFarm()
@@ -986,7 +1040,7 @@ local players = heroManager.iCount
     if eTarget then
 	UseSpell(_E,eTarget)
 	  if VeigarConfig.ew.addq then
-		UseSpell(_Q, eTarget)
+		if VeigarConfig.combo.wf then if W ~= 1 then UseSpell(_Q, eTarget) end else UseSpell(_Q, eTarget) end 
 	  end
     end
   end
@@ -1029,8 +1083,8 @@ function Drawing()
     DrawCircle(targe.x, targe.y, targe.z, 100, ARGB(250, 253, 33, 33))
     end
 	
-	if VeigarConfig.combo.newts and ValidTarget(starg) then
-	targggg = starg
+	if VeigarConfig.combo.newts and ValidTarget(ftarg) then
+	targggg = ftarg
     DrawCircle(targggg.x, targggg.y, targggg.z, 100, ARGB(250, 51, 250, 51))
     end
 	
@@ -1296,12 +1350,39 @@ end
 function ManaRegenSec()
 	if VeigarConfig.combo.ShowMana then
 		if not myHero.dead or VeigarConfig.other.Death then
-			if myHero.mana < ComboManaCost({_Q, _W, _E, _R}) then
-				DrawNoMana()
+			local HPBARM = GetHPBarPos(myHero)
+			if myHero.mana < ComboManaCost({_Q}) then
+				timetoregen = (ComboManaCost({_Q}) - myHero.mana) / myHero.mpRegen
+				mvar = "Q"
+				if ftarg == nil then DrawText("NoMana:"..mvar.."("..math.floor(timetoregen).."s)",15, HPBARM.x - 78, HPBARM.y - 4,RGB(51, 255, 255)) else DrawText("No Mana for:"..mvar.."("..math.floor(timetoregen).."s)",15, HPBARM.x - 76, HPBARM.y + 8,RGB(51, 255, 255)) end
+			elseif myHero.mana < ComboManaCost({_W, _E}) then
+				timetoregen = (ComboManaCost({_W, _E}) - myHero.mana) / myHero.mpRegen
+				mvar = "E+W"
+				if ftarg == nil then DrawText("NoMana:"..mvar.."("..math.floor(timetoregen).."s)",15, HPBARM.x - 78, HPBARM.y - 4,RGB(51, 255, 255)) else DrawText("No Mana for:"..mvar.."("..math.floor(timetoregen).."s)",15, HPBARM.x - 76, HPBARM.y + 8,RGB(51, 255, 255)) end
+			elseif myHero.mana < ComboManaCost({_Q, _W, _E}) then
+				timetoregen = (ComboManaCost({_Q, _W, _E}) - myHero.mana) / myHero.mpRegen
+				mvar = "E+W+Q"
+				if ftarg == nil then DrawText("NoMana:"..mvar.."("..math.floor(timetoregen).."s)",15, HPBARM.x - 78, HPBARM.y - 4,RGB(51, 255, 255)) else DrawText("No Mana for:"..mvar.."("..math.floor(timetoregen).."s)",15, HPBARM.x - 76, HPBARM.y + 8,RGB(51, 255, 255)) end
+			elseif myHero.mana < ComboManaCost({_Q, _W, _E, _R}) then
+				timetoregen = (ComboManaCost({_Q, _W, _E, _R}) - myHero.mana) / myHero.mpRegen
+				mvar = "E+W+Q+R"
+				if ftarg == nil then DrawText("NoMana:"..mvar.."("..math.floor(timetoregen).."s)",15, HPBARM.x - 78, HPBARM.y - 4,RGB(51, 255, 255)) else DrawText("No Mana for:"..mvar.."("..math.floor(timetoregen).."s)",15, HPBARM.x - 76, HPBARM.y + 8,RGB(51, 255, 255)) end
 			end
 		end
 	end
 end
+
+function ManaCosts()
+	Qlevel = myHero:GetSpellData(_Q).level
+	Wlevel = myHero:GetSpellData(_W).level
+	Elevel = myHero:GetSpellData(_E).level
+	Rlevel = myHero:GetSpellData(_R).level
+end
+
+function DrawNoMana()
+	timetoregen = (ComboManaCost({_Q, _W, _E, _R}) - myHero.mana) / myHero.mpRegen
+end
+
 
 function UpdateCheck()
 local AUTOUPDATE = true
@@ -1326,12 +1407,6 @@ local DownloadSourceLib = false
 	local libDownload = Require("SourceLib")
 	libDownload:Add("vPrediction", "https://raw.github.com/Hellsing/BoL/master/common/VPrediction.lua")
 	libDownload:Add("SOW", "https://raw.github.com/Hellsing/BoL/master/common/SOW.lua")
-	--[[
-	if VIP_USER then
-		libDownload:Add("Prodiction", "https://bitbucket.org/Klokje/public-klokjes-bol-scripts/raw/ec830facccefb3b52212dba5696c08697c3c2854/Test/Prodiction/Prodiction.lua")
-		prodstatus = true
-	end
-	]]
 	libDownload:Check()
 
 	if libDownload.downloadNeeded == true then return end
@@ -1350,18 +1425,6 @@ function IgniteSlot()
 	else
 		return nil
 	end
-end
-
-function ManaCosts()
-	Qlevel = myHero:GetSpellData(_Q).level
-	Wlevel = myHero:GetSpellData(_W).level
-	Elevel = myHero:GetSpellData(_E).level
-	Rlevel = myHero:GetSpellData(_R).level
-end
-
-function DrawNoMana()
-	timetoregen = (ComboManaCost({_Q, _W, _E, _R}) - myHero.mana) / myHero.mpRegen
-	DrawText3D("No Mana ("..math.floor(timetoregen).."s) !!", myHero.x, myHero.y, myHero.z, 25, RGB(48, 213, 200), true)
 end
 
 function DrawCircleNextLvl(x, y, z, radius, width, color, chordlength)
@@ -1461,7 +1524,7 @@ function Potions()
 		end
 
 		if  TargetHaveBuff("SummonerDot", myHero) or TargetHaveBuff("MordekaiserChildrenOfTheGrave", myHero) and not InFountain() and VeigarConfig.LifeSaver.antign then
-			if hppot ~= nil then
+			if hppot ~= nil and not TargetHaveBuff("RegenerationPotion", myHero) then
 				CastSpell(hppot)
 			end
 			
@@ -1780,10 +1843,8 @@ function performcombo1()
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		int6 = 1
 			UseSpell(_Q, targ)
-			--if VeigarConfig.combo.forceaa then aa() end
 		if Q == 0 then int6 = 0 end
 	end
-	
 end
 
 function performcombo2()
@@ -1795,10 +1856,8 @@ function performcombo2()
 		int6 = 1
 			UseSpell(DFG, targ)
 			UseSpell(_Q, targ)
-			--if VeigarConfig.combo.forceaa then aa() end
 		if Q == 0 then int6 = 0 end
 	end
-	
 end
 
 function performcombo3()
@@ -1810,8 +1869,6 @@ function performcombo3()
 			UseSpell(_Q, targ)
 			if Q == 0 then int6 = 0 end
 			end
-			--if VeigarConfig.combo.forceaa then aa() end
-			
 	end
 	
 end
@@ -1827,9 +1884,7 @@ function performcombo4()
 			UseSpell(_Q, targ)
 			if Q == 0 then int6 = 0 end
 			end
-			--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo5()
@@ -1848,9 +1903,7 @@ function performcombo5()
 			if ignitos == 0 then int6 = 0 end
 			end
 		end
-		--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo6()
@@ -1871,9 +1924,7 @@ function performcombo6()
 			if ignitos == 0 then int6 = 0 end
 			end
 		end
-		--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo7()
@@ -1890,9 +1941,7 @@ function performcombo7()
 		UseSpell(_R, targ)
 		if R == 0 then int6 = 0 end
 		end
-		--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo8()
@@ -1911,10 +1960,7 @@ function performcombo8()
 		UseSpell(_R, targ)
 		if R == 0 then int6 = 0 end
 		end
-
-		--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo9()
@@ -1933,9 +1979,7 @@ function performcombo9()
 		UseSpell(ignite, targ)
 		if ignitos == 0 then int6 = 0 end
 		end
-		--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo10()
@@ -1956,9 +2000,7 @@ function performcombo10()
 		UseSpell(ignite, targ)
 		if ignitos == 0 then int6 = 0 end
 		end
-		--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo11()
@@ -1977,9 +2019,7 @@ function performcombo11()
 			if R == 0 then int6 = 0 end
 			end
 		end
-		--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo12()
@@ -2000,9 +2040,7 @@ function performcombo12()
 			if R == 0 then int6 = 0 end
 			end
 		end
-		--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo13()
@@ -2023,9 +2061,7 @@ function performcombo13()
 			if ignitos == 0 then int6 = 0 end
 			end
 		end
-		--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo14()
@@ -2048,9 +2084,7 @@ function performcombo14()
 			if ignitos == 0 then int6 = 0 end
 			end
 		end
-		--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo15()
@@ -2059,10 +2093,8 @@ function performcombo15()
 		int6 = 1
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		UseSpell(_Q, targ)
-		--if VeigarConfig.combo.forceaa then aa() end
 		if Q == 0 then int6 = 0 end
 	end
-	
 end
 
 function performcombo16()
@@ -2071,10 +2103,8 @@ function performcombo16()
 		int6 = 1
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		UseSpell(_R, targ)
-		--if VeigarConfig.combo.forceaa then aa() end
 		if R == 0 then int6 = 0 end
 	end
-	
 end
 
 function performcombo17()
@@ -2082,10 +2112,8 @@ function performcombo17()
 		targ = rtarg
 		int6 = 1
 		UseSpell(_E, targ)
-	--if VeigarConfig.combo.forceaa then aa() end
 	if W == 0 then int6 = 0 end
 	end
-	
 end
 
 function performcombo18()
@@ -2097,10 +2125,7 @@ function performcombo18()
 			if targ.canMove ~= true then
 			UseSpell(DFG, targ)
 			end
-			if DFGI == 0 then int6 = 0 end
-	--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 function performcombo19()
@@ -2111,9 +2136,7 @@ function performcombo19()
 		if VeigarConfig.ew.forcestun then UseSpell(_E, targ) end
 		UseSpell(ignite, targ)
 		if ignitos == 0 then int6 = 0 end
-	--if VeigarConfig.combo.forceaa then aa() end
 	end
-	
 end
 
 
@@ -2320,6 +2343,8 @@ function OtherTeam(target)
 end
 
 function Checks()
+if ts.target ~= nil then tt = ts.target else tt = nil end
+if VeigarConfig.combo.newtsr then if ftarg ~= nil and ftarg.dead == true then ftarg = nil end end
 	ts:update()
 	--DFG CHECK--
 		if GetInventorySlotItem(3128) ~= nil then
@@ -2403,8 +2428,6 @@ function Checks()
 		UseStunV3()
 	end
 	if VeigarConfig.combo.forceaa and int6 ~= 1 and rtarg ~= nil then if VeigarConfig.combo.spacebarActive or VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall then if GetDistance(rtarg,myHero) <= 1000 then int7 = 1 else int7 = 0 end end end
-	--aatrange = VeigarConfig.combo.AAtrange
-	--aatcount = VeigarConfig.combo.AAtcount
 	WALKtcount = VeigarConfig.combo.moveset.WALKtcount
 	WALKtrange = VeigarConfig.combo.moveset.WALKtrange
 	if CountEnemyHeroInRange(WALKtrange) <= WALKtcount then
@@ -2434,9 +2457,9 @@ function Checks()
 	end
 	end
 	end
-	if starg ~= nil and VeigarConfig.combo.newts then rtarg = starg elseif ts.target ~= nil then rtarg = ts.target end
-	if VeigarConfig.other.tsremove then starg = nil end
-	if not VeigarConfig.combo.newts then starg = nil end
+	if VeigarConfig.other.tsremove then ftarg = nil end
+	if not VeigarConfig.combo.newts then ftarg = nil end
+	if ftarg ~= nil and VeigarConfig.combo.newts then rtarg = ftarg elseif ts.target ~= nil then rtarg = ts.target end
 	--SLOT CHECKS--
 	hppot = GetInventorySlotItem(2003)
 	mppot = GetInventorySlotItem(2004)
