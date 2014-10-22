@@ -1,7 +1,7 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.1
+local version = 3.2
 --[GLOBALS]--
-local DFG = GetInventorySlotItem(3128)
+local DFG = nil
 local ignite = nil
 local qRange = 650
 local lastFarmCheck = 0
@@ -2624,7 +2624,7 @@ if VeigarConfig.combo.newtsr then if ftarg ~= nil and ftarg.dead == true then ft
 	zhonya = GetInventorySlotItem(3157)
 	wooglet = GetInventorySlotItem(3090)
 	seraph = GetInventorySlotItem(3040)
-	DFG = GetInventorySlotItem(3128)
+	if GetInventorySlotItem(3128) == nil then DFG = 0 else DFG = 1 end
 	
 	if VeigarConfig.combo.spacebarActive or VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.ew.stuncl or VeigarConfig.ew.cageTeamActive or VeigarConfig.harras.Qharras or VeigarConfig.ew.eCastActive then 
 	if VeigarConfig.combo.moveway == 1 then return end
