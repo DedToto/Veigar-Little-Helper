@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.2
+local version = 3.3
 --[GLOBALS]--
 local DFG = nil
 local ignite = nil
@@ -234,6 +234,7 @@ function OnLoad()
 			VeigarConfig.combo:addParam("newtsr", "Auto remove lock from dead target", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.combo:addParam("ShowMana", "Show Time for combo mana regen", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.combo:addParam("showsecs", "Show Time left for kill combo[TEST]", SCRIPT_PARAM_ONOFF, true)
+			VeigarConfig.combo:addParam("showsecsc", "Show Time if needed CD is <", SCRIPT_PARAM_SLICE, 15, 1, 190, 0)
 			VeigarConfig.combo:addParam("savedfg", "Only use DFG in all-in like combos", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("tryq", "Always try to lasthit enemy with Q", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.combo:addParam("wf", "Always use W first", SCRIPT_PARAM_ONOFF, false)
@@ -736,251 +737,251 @@ function ExtraInformation()
 					DrawText("Q",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ) < 15 and math.max(QQ) > 0   then DrawText("Q("..math.max(QQ)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ) < VeigarConfig.combo.showsecsc and math.max(QQ) > 0   then DrawText("Q("..math.max(QQ)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + AAdmg)) then																																			--Q+AA
 					if Q ~= 0 then
 					DrawText(("Q+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ) < 15 and math.max(QQ) > 0 then DrawText("Q+AA("..math.max(QQ)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ) < VeigarConfig.combo.showsecsc and math.max(QQ) > 0 then DrawText("Q+AA("..math.max(QQ)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + DFGdmg)) then																																		--DFG Q
 					if Q ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|Q"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,DFGII) < 15 and math.max(QQ,DFGII) > 0 then DrawText("|DFG|Q("..math.max(QQ,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,DFGII) < VeigarConfig.combo.showsecsc and math.max(QQ,DFGII) > 0 then DrawText("|DFG|Q("..math.max(QQ,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg) and Q ~= 0 and DFGI ~= 0) then																										--DFG Q+AA
 					if Q ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|Q+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,DFGII) < 15 and math.max(QQ,DFGII) > 0 then DrawText("|DFG|Q+AA("..math.max(QQ,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,DFGII) < VeigarConfig.combo.showsecsc and math.max(QQ,DFGII) > 0 then DrawText("|DFG|Q+AA("..math.max(QQ,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health <= (Wdmg )) then																																				--W
 					if W ~= 0 and E ~= 0 then
 					DrawText(("W"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(WW,EE) < 15 and math.max(WW,EE) > 0 then DrawText("W("..math.max(WW,EE)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(WW,EE) < VeigarConfig.combo.showsecsc and math.max(WW,EE) > 0 then DrawText("W("..math.max(WW,EE)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health <= (Wdmg + AAdmg) and W ~= 0 and E ~= 0) then																													--W+AA
 					if W ~= 0 and E ~= 0 then
 					DrawText(("W+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(WW,EE) < 15 and math.max(WW,EE) > 0 then DrawText("WW+AA("..math.max(WW,EE)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(WW,EE) < VeigarConfig.combo.showsecsc and math.max(WW,EE) > 0 then DrawText("WW+AA("..math.max(WW,EE)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health <= (Wdmg + DFGdmg )) then																																		--DFG W	
 					if W ~= 0 and E ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|W"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(WW,EE,DFGII) < 15 and math.max(WW,EE,DFGII) > 0 then DrawText("|DFG|W("..math.max(WW,EE,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(WW,EE,DFGII) < VeigarConfig.combo.showsecsc and math.max(WW,EE,DFGII) > 0 then DrawText("|DFG|W("..math.max(WW,EE,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health <= (Wdmg + DFGdmg + AAdmg)) then																																--DFG W+AA
 					if W ~= 0 and E ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|W+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(WW,EE,DFGII) < 15 and math.max(WW,EE,DFGII) > 0 then DrawText("|DFG|W+AA("..math.max(WW,EE,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(WW,EE,DFGII) < VeigarConfig.combo.showsecsc and math.max(WW,EE,DFGII) > 0 then DrawText("|DFG|W+AA("..math.max(WW,EE,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health <= (IGNITEdmg)) then																																			--IGN
 					if ignitos ~= 0 then
 					DrawText(("IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(ignitoss) < 15 and math.max(ignitoss) > 0 then DrawText("IGN("..math.max(ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(ignitoss) < VeigarConfig.combo.showsecsc and math.max(ignitoss) > 0 then DrawText("IGN("..math.max(ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health <= (IGNITEdmg + AAdmg)) then																																	--IGN+AA
 					if ignitos ~= 0 then
 					DrawText(("IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(ignitoss) < 15 and math.max(ignitoss) > 0 then DrawText("IGN+AA("..math.max(ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(ignitoss) < VeigarConfig.combo.showsecsc and math.max(ignitoss) > 0 then DrawText("IGN+AA("..math.max(ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + Wdmg )) then 																																		--Q+W
 					if Q ~= 0 and W ~= 0 then
 					DrawText(("Q+W"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,WW) < 15 and math.max(QQ,WW) > 0 then DrawText("Q+W("..math.max(QQ,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,WW) < VeigarConfig.combo.showsecsc and math.max(QQ,WW) > 0 then DrawText("Q+W("..math.max(QQ,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + Wdmg + AAdmg)) then 																																	--Q+W+AA
 					if Q ~= 0 and W ~= 0 then
 					DrawText(("Q+W+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,WW) < 15 and math.max(QQ,WW) > 0 then DrawText("Q+W+AA("..math.max(QQ,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,WW) < VeigarConfig.combo.showsecsc and math.max(QQ,WW) > 0 then DrawText("Q+W+AA("..math.max(QQ,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + Wdmgi  + DFGdmg)) then 																																--DFG Q+W
 					if Q ~= 0 and W ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|Q+W"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,WW,DFGII) < 15 and math.max(QQ,WW,DFGII) > 0 then DrawText("|DFG|Q+W("..math.max(QQ,WW,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,WW,DFGII) < VeigarConfig.combo.showsecsc and math.max(QQ,WW,DFGII) > 0 then DrawText("|DFG|Q+W("..math.max(QQ,WW,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + Wdmgi + AAdmg + DFGdmg)) then 																														--DFG Q+W+AA
 					if Q ~= 0 and W ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|Q+W+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,WW,DFGII) < 15 and math.max(QQ,WW,DFGII) > 0 then DrawText("|DFG|Q+W+AA("..math.max(QQ,WW,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,WW,DFGII) < VeigarConfig.combo.showsecsc and math.max(QQ,WW,DFGII) > 0 then DrawText("|DFG|Q+W+AA("..math.max(QQ,WW,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + Wdmg + IGNITEdmg)) then																																--Q+W+IGN
 					if Q ~= 0 and W ~= 0 and ignitos ~= 0 then
 					DrawText(("Q+W+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,WW,ignitoss) < 15 and math.max(QQ,WW,ignitoss) > 0 then DrawText("Q+W+IGN("..math.max(QQ,WW,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,WW,ignitoss) < VeigarConfig.combo.showsecsc and math.max(QQ,WW,ignitoss) > 0 then DrawText("Q+W+IGN("..math.max(QQ,WW,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + Wdmg + IGNITEdmg + AAdmg)) then																														--Q+W+IGN+AA
 					if Q ~= 0 and W ~= 0 and ignitos ~= 0 then
 					DrawText(("Q+W+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,WW,ignitoss) < 15 and math.max(QQ,WW,ignitoss) > 0 then DrawText("Q+W+IGN+AA("..math.max(QQ,WW,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,WW,ignitoss) < VeigarConfig.combo.showsecsc and math.max(QQ,WW,ignitoss) > 0 then DrawText("Q+W+IGN+AA("..math.max(QQ,WW,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + Wdmgi + IGNITEdmg  + DFGdmg)) then																													--DFG Q+W+IGN
 					if Q ~= 0 and W ~= 0 and DFGI ~= 0 and ignitos ~= 0 then
 					DrawText(("|DFG|Q+W+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,WW,ignitoss,DFGII) < 15 and math.max(QQ,WW,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+W+IGN("..math.max(QQ,WW,ignitoss,DFGI)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,WW,ignitoss,DFGII) < VeigarConfig.combo.showsecsc and math.max(QQ,WW,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+W+IGN("..math.max(QQ,WW,ignitoss,DFGI)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + Wdmgi + IGNITEdmg + AAdmg + DFGdmg)) then																											--DFG Q+W+IGN+AA
 					if Q ~= 0 and W ~= 0 and DFGI ~= 0 and ignitos ~= 0 then
 					DrawText(("|DFG|Q+W+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,WW,ignitoss,DFGII) < 15 and math.max(QQ,WW,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+W+IGN+AA("..math.max(QQ,WW,ignitoss,DFGI)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,WW,ignitoss,DFGII) < VeigarConfig.combo.showsecsc and math.max(QQ,WW,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+W+IGN+AA("..math.max(QQ,WW,ignitoss,DFGI)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Rdmg )) then																																				--R
 					if R ~= 0 then 
 					DrawText(("R"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(RR) < 15 and math.max(RR) > 0 then DrawText("R("..math.max(RR)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(RR) < VeigarConfig.combo.showsecsc and math.max(RR) > 0 then DrawText("R("..math.max(RR)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Rdmg + AAdmg) and R ~= 0) then																																--R+AA
 					if R ~= 0 then 
 					DrawText(("R+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(RR) < 15 and math.max(RR) > 0 then DrawText("R+AA("..math.max(RR)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(RR) < VeigarConfig.combo.showsecsc and math.max(RR) > 0 then DrawText("R+AA("..math.max(RR)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg  + Rdmg)) then																																			--Q+R
 					if R ~= 0 and Q ~= 0 then 
 					DrawText(("Q+R"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,RR) < 15 and math.max(QQ,RR) > 0 then DrawText("Q+R("..math.max(RR,QQ)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,RR) < VeigarConfig.combo.showsecsc and math.max(QQ,RR) > 0 then DrawText("Q+R("..math.max(RR,QQ)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + AAdmg + Rdmg)) then																																	--Q+R+AA
 					if R ~= 0 and Q ~= 0 then 
 					DrawText(("Q+R+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,RR) < 15 and math.max(QQ,RR) > 0 then DrawText("Q+R+AA("..math.max(RR,QQ)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,RR) < VeigarConfig.combo.showsecsc and math.max(QQ,RR) > 0 then DrawText("Q+R+AA("..math.max(RR,QQ)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi  + DFGdmg + Rdmgi)) then																																--DFG Q+R
 					if R ~= 0 and Q ~= 0 and DFGI ~= 0 then 
 					DrawText(("|DFG|Q+R"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,RR,DFGII) < 15 and math.max(QQ,RR,DFGII) > 0 then DrawText("|DFG|Q+R("..math.max(RR,QQ,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,RR,DFGII) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,DFGII) > 0 then DrawText("|DFG|Q+R("..math.max(RR,QQ,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + AAdmg + DFGdmg + Rdmgi)) then																														--DFG Q+R+AA
 					if R ~= 0 and Q ~= 0 and DFGI ~= 0 then 
 					DrawText(("|DFG|Q+R+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,RR,DFGII) < 15 and math.max(QQ,RR,DFGII) > 0 then DrawText("|DFG|Q+R+AA("..math.max(RR,QQ,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,RR,DFGII) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,DFGII) > 0 then DrawText("|DFG|Q+R+AA("..math.max(RR,QQ,DFGII)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + IGNITEdmg  + Rdmg)) then																																--Q+R+IGN
 					if Q ~= 0 and R ~= 0 and ignitos ~= 0 then
 					DrawText(("Q+R+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))		
 					kill = 1
 					else
-					if math.max(QQ,RR,ignitoss) < 15 and math.max(QQ,RR,ignitoss) > 0 then DrawText("Q+R+IGN("..math.max(RR,QQ,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,RR,ignitoss) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,ignitoss) > 0 then DrawText("Q+R+IGN("..math.max(RR,QQ,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + IGNITEdmg + AAdmg + Rdmg)) then																														--Q+R+IGN+AA
 					if Q ~= 0 and R ~= 0 and ignitos ~= 0 then
 					DrawText(("Q+R+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,RR,ignitoss) < 15 and math.max(QQ,RR,ignitoss) > 0 then DrawText("Q+R+IGN+AA("..math.max(RR,QQ,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,RR,ignitoss) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,ignitoss) > 0 then DrawText("Q+R+IGN+AA("..math.max(RR,QQ,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + IGNITEdmg  + DFGdmg + Rdmgi)) then																													--DFG Q+R+IGN
 					if Q ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|Q+R+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,RR,DFGII,ignitoss) < 15 and math.max(QQ,RR,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+R+IGN("..math.max(RR,QQ,DFGII,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,RR,DFGII,ignitoss) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+R+IGN("..math.max(RR,QQ,DFGII,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + IGNITEdmg + AAdmg + DFGdmg + Rdmgi)) then																											--DFG Q+R+IGN+AA
 					if Q ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|Q+R+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,RR,DFGII,ignitoss) < 15 and math.max(QQ,RR,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+R+IGN+AA("..math.max(RR,QQ,DFGII,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,RR,DFGII,ignitoss) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+R+IGN+AA("..math.max(RR,QQ,DFGII,ignitoss)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + Wdmg + Rdmg  )) then																																	--Q+W+R
 					if Q ~= 0 and W ~= 0 and R ~= 0 then
 					DrawText(("Q+W+R"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,RR,WW) < 15 and math.max(QQ,RR,WW) > 0 then DrawText("Q+W+R("..math.max(RR,QQ,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,RR,WW) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,WW) > 0 then DrawText("Q+W+R("..math.max(RR,QQ,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + AAdmg )) then																															--Q+W+R+AA
 					if Q ~= 0 and W ~= 0 and R ~= 0 then
 					DrawText(("Q+W+R+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,RR,WW) < 15 and math.max(QQ,RR,WW) > 0 then DrawText("Q+W+R+AA("..math.max(RR,QQ,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,RR,WW) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,WW) > 0 then DrawText("Q+W+R+AA("..math.max(RR,QQ,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi  + DFGdmg )) then																														--DFG Q+W+R
 					if Q ~= 0 and W ~= 0 and R ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|Q+W+R"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,RR,DFGII,WW) < 15 and math.max(QQ,RR,DFGII,WW) > 0 then DrawText("|DFG|Q+W+R("..math.max(RR,QQ,DFGII,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,RR,DFGII,WW) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,DFGII,WW) > 0 then DrawText("|DFG|Q+W+R("..math.max(RR,QQ,DFGII,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + AAdmg + DFGdmg )) then																												--DFG Q+W+R+AA
 					if Q ~= 0 and W ~= 0 and R ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|Q+W+R+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,RR,DFGII,WW) < 15 and math.max(QQ,RR,DFGII,WW) > 0 then DrawText("|DFG|Q+W+R+AA("..math.max(RR,QQ,DFGII,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,RR,DFGII,WW) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,DFGII,WW) > 0 then DrawText("|DFG|Q+W+R+AA("..math.max(RR,QQ,DFGII,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + IGNITEdmg  )) then																														--Q+W+R+IGN
 					if Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0  then
 					DrawText(("Q+W+R+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,RR,ignitoss,WW) < 15 and math.max(QQ,RR,ignitoss,WW) > 0 then DrawText("Q+W+R+IGN("..math.max(RR,QQ,ignitoss,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,RR,ignitoss,WW) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,ignitoss,WW) > 0 then DrawText("Q+W+R+IGN("..math.max(RR,QQ,ignitoss,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmg + Wdmg + Rdmg + IGNITEdmg + AAdmg )) then																												--Q+W+R+IGN+AA
 					if Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0  then
 					DrawText(("Q+W+R+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if math.max(QQ,RR,ignitoss,WW) < 15 and math.max(QQ,RR,ignitoss,WW) > 0 then DrawText("Q+W+R+IGN+AA("..math.max(RR,QQ,ignitoss,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
+					if math.max(QQ,RR,ignitoss,WW) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,ignitoss,WW) > 0 then DrawText("Q+W+R+IGN+AA("..math.max(RR,QQ,ignitoss,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg  + DFGdmg)) then																											--DFG Q+W+R+IGN
 					if Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|Q+W+R+IGN"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					kill = 1
 					else
-					if DFG ~= 0 then if math.max(QQ,RR,ignitoss,DFGII,WW) < 15 and math.max(QQ,RR,WW,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+W+R+IGN("..math.max(RR,QQ,DFGII,ignitoss,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,RR,ignitoss,DFGII,WW) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,WW,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+W+R+IGN("..math.max(RR,QQ,DFGII,ignitoss,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					elseif (enemy.health < (Qdmgi + Wdmgi + Rdmgi + IGNITEdmg + AAdmg + DFGdmg)) then																									--DFG Q+W+R+IGN+AA
 					if Q ~= 0 and W ~= 0 and R ~= 0 and ignitos ~= 0 and DFGI ~= 0 then
 					DrawText(("|DFG|Q+W+R+IGN+AA"),19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255))
 					else
-					if DFG ~= 0 then if math.max(QQ,RR,ignitoss,DFGII,WW) < 15 and math.max(QQ,RR,WW,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+W+R+IGN+AA("..math.max(RR,QQ,DFGII,ignitoss,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
+					if int2 ~= 0 then if math.max(QQ,RR,ignitoss,DFGII,WW) < VeigarConfig.combo.showsecsc and math.max(QQ,RR,WW,ignitoss,DFGII) > 0 then DrawText("|DFG|Q+W+R+IGN+AA("..math.max(RR,QQ,DFGII,ignitoss,WW)..")s",19, HPBAR.x - 127, HPBAR.y - 40,RGB(255, 255, 255)) else kill = 0 end else kill = 0 end
 					end
 					else
 					kill = 0
@@ -2528,7 +2529,7 @@ function Checks()
 if ts.target ~= nil then tt = ts.target else tt = nil end
 if VeigarConfig.combo.newtsr then if ftarg ~= nil and ftarg.dead == true then ftarg = nil end end
 	ts:update()
-	--DFG CHECK--
+		--DFG CHECK--
 		if GetInventorySlotItem(3128) ~= nil then
 		int2 = 1
 		else
@@ -2544,6 +2545,7 @@ if VeigarConfig.combo.newtsr then if ftarg ~= nil and ftarg.dead == true then ft
 			DFGII = round(GetSpellData(DFG).currentCd, 1)
 		end
 	end
+
 	--Q,W,E,R,IGNITE CHECK--
 	if CanUseSpell(_Q) == READY then
 	Q = 1
@@ -2624,7 +2626,7 @@ if VeigarConfig.combo.newtsr then if ftarg ~= nil and ftarg.dead == true then ft
 	zhonya = GetInventorySlotItem(3157)
 	wooglet = GetInventorySlotItem(3090)
 	seraph = GetInventorySlotItem(3040)
-	if GetInventorySlotItem(3128) == nil then DFG = 0 else DFG = 1 end
+	DFG = GetInventorySlotItem(3128)
 	
 	if VeigarConfig.combo.spacebarActive or VeigarConfig.combo.lightcombo or VeigarConfig.combo.wasteall or VeigarConfig.ew.stuncl or VeigarConfig.ew.cageTeamActive or VeigarConfig.harras.Qharras or VeigarConfig.ew.eCastActive then 
 	if VeigarConfig.combo.moveway == 1 then return end
