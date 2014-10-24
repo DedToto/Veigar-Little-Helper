@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.2
+local version = 3.4
 --[GLOBALS]--
 local DFG = GetInventorySlotItem(3128)
 local ignite = nil
