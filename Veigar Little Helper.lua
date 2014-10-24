@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.3
+local version = 3.4
 --[GLOBALS]--
 local DFG = nil
 local ignite = nil
@@ -252,7 +252,7 @@ function OnLoad()
 			VeigarConfig.ew:addParam("stuncl", "Stun Closest Enemy", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("A"))
 			VeigarConfig.ew:addParam("forcestun", "Always cast E(even for Q+R kill)", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addParam("wppl", "Use W on any CC'ed enemies", SCRIPT_PARAM_ONOFF, false)
-			VeigarConfig.ew:addParam("stuntt", "Stun Enemies attacked by turret", SCRIPT_PARAM_ONOFF, true)
+			if VIP_USER then VeigarConfig.ew:addParam("stuntt", "Stun Enemies attacked by turret", SCRIPT_PARAM_ONOFF, true) end
 			VeigarConfig.ew:addParam("interrupt", "Use E to interrupt channeled ultimates", SCRIPT_PARAM_ONOFF, true)
 			VeigarConfig.ew:addParam("stuntp", "Use E on End Position of TP spells[TEST]", SCRIPT_PARAM_ONOFF, false)
 			VeigarConfig.ew:addSubMenu("Interrupt list", "List")
@@ -388,7 +388,20 @@ function OnDraw()
 end
 
 --[END OF THE MAIN PART]
-
+--[[
+function OnReady()
+	BuyItem(1004)
+	BuyItem(2003)
+	BuyItem(2003)
+	BuyItem(2003)
+	BuyItem(2003)
+	BuyItem(2003)
+	BuyItem(2004)
+	BuyItem(2004)
+	BuyItem(2004)
+	BuyItem(3340)
+end
+--]]
 local NegativBuffTypes = {
 			[5] = true, --stun
 }
@@ -488,9 +501,9 @@ function skinChanged()
 	return VeigarConfig.other.skin1 ~= lastSkin
 end
 
-function OnProcessSpell(object, spellProc)
-	targt = spellProc.target
-	if object.type == "obj_AI_Turret" and GetDistance(player, targt) < (erange + eradius) then
+function OnTowerFocus(tower, unit)
+	targt = unit
+	if GetDistance(player, targt) < (erange + eradius) then
 		if targt.type == myHero.type and VeigarConfig.ew.stuntt then
 		useStun(targt)
 		end
@@ -1209,15 +1222,15 @@ end
 function getelvl()
 local am = 0
 if myHero:GetSpellData(_E).level == 1 then
-am = 1
+am = round(1.5 * 0.65, 1)
 elseif myHero:GetSpellData(_E).level == 2 then
-am = 1.1
+am = round(1.75 * 0.65, 1)
 elseif myHero:GetSpellData(_E).level == 3 then
-am = 1.3
+am = round(2 * 0.65, 1)
 elseif myHero:GetSpellData(_E).level == 4 then
-am = 1.5
+am = round(2.25 * 0.65, 1)
 elseif myHero:GetSpellData(_E).level == 5 then
-am = 1.6
+am = round(2.5 * 0.65, 1)
 end
 return am
 end
@@ -1236,14 +1249,16 @@ function autoFarm()
 								if minion ~= nil and minion.name:find("mechcannon") and minion.team ~= myHero.team and minion.dead == false and GetDistance(minion) < qRange then
 									local qDamage = getDmg("Q",minion,myHero)
 									if qDamage >= minion.health then
-										UseSpell(_Q, minion)
+										--UseSpell(_Q, minion)
+										CastSpell(_Q, minion)
 										usedQ = true
 									end
 								end
 								if minion ~= nil and minion.name:find("Minion_") and minion.team ~= myHero.team and minion.dead == false and GetDistance(minion) < qRange then
 									local qDamage = getDmg("Q",minion,myHero)
 									if qDamage >= minion.health then
-										UseSpell(_Q, minion)
+										--UseSpell(_Q, minion)
+										CastSpell(_Q, minion)
 										usedQ = true
 									end
 								end
@@ -1550,7 +1565,8 @@ function UseSpell(Spell,target)
 		end
 	elseif Spell == ignite then
 		if VeigarConfig.combo.packet then
-			Packet("S_CAST", {spellId = Spell, targetNetworkId = target.networkID}):send()
+			--Packet("S_CAST", {spellId = Spell, targetNetworkId = target.networkID}):send()
+			CastSpell(Spell, target)
 		else
 			CastSpell(Spell, target)
 		end
