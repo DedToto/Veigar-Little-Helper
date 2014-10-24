@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.4
+local version = 3.41
 --[GLOBALS]--
 local DFG = nil
 local ignite = nil
@@ -1222,15 +1222,15 @@ end
 function getelvl()
 local am = 0
 if myHero:GetSpellData(_E).level == 1 then
-am = round(1.5 * 0.65, 1)
+am = 1
 elseif myHero:GetSpellData(_E).level == 2 then
-am = round(1.75 * 0.65, 1)
+am = 1.1
 elseif myHero:GetSpellData(_E).level == 3 then
-am = round(2 * 0.65, 1)
+am = 1.3
 elseif myHero:GetSpellData(_E).level == 4 then
-am = round(2.25 * 0.65, 1)
+am = 1.5
 elseif myHero:GetSpellData(_E).level == 5 then
-am = round(2.5 * 0.65, 1)
+am = 1.6
 end
 return am
 end
