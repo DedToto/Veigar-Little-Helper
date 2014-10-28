@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.41
+local version = 3.42
 --[GLOBALS]--
 local DFG = nil
 local ignite = nil
@@ -2589,7 +2589,7 @@ if VeigarConfig.combo.newtsr then if ftarg ~= nil and ftarg.dead == true then ft
 	ignitos = 1
 	else
 	ignitos = 0
-	ignitoss = round(GetSpellData(ignite).currentCd, 1)
+	if ignite ~= nil then ignitoss = round(GetSpellData(ignite).currentCd, 1) end
 	end
 	
 	if CanUseSpell(_E) == READY then
