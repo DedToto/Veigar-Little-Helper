@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.42
+local version = 3.43
 --[GLOBALS]--
 local DFG = nil
 local ignite = nil
@@ -1328,6 +1328,10 @@ local players = heroManager.iCount
         end
       end
     end
+  end
+  
+  if eTarget then
+	UseSpell(_E,eTarget)
   end
 
   if VeigarConfig.ew.cageTeamActive == true and rtarg ~= nil and not player.dead then
