@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.44
+local version = 3.45
 --[GLOBALS]--
 local DFG = nil
 local ignite = nil
@@ -350,12 +350,12 @@ function OnLoad()
 		NSOW:LoadToMenu(VeigarConfig.OrbWalking)
 	startsprite = GetWebSprite("http://puu.sh/be5pB/4f7556bc18.png")	
 end
-function _drawstartsprite()
-    if startsprite and GetInGameTimer() >= 1 and GetInGameTimer() <= 20 then        
-        local chPos = WorldToScreen(D3DXVECTOR3(myHero.x, myHero.y, myHero.z))    
-        startsprite:Draw(WINDOW_W*0.83, WINDOW_H*0.33, 255)        
-    end
-end
+--function _drawstartsprite()
+   -- if startsprite and GetInGameTimer() >= 1 and GetInGameTimer() <= 20 then        
+       -- local chPos = WorldToScreen(D3DXVECTOR3(myHero.x, myHero.y, myHero.z))    
+      --  startsprite:Draw(WINDOW_W*0.83, WINDOW_H*0.33, 255)        
+   -- end
+--end
 
 function OnTick()
 	Checks()
@@ -378,7 +378,7 @@ function OnTick()
 end
 
 function OnDraw()
-	_drawstartsprite()
+--	_drawstartsprite()
 	ManaRegenSec()
 	if not myHero.dead or VeigarConfig.other.Death then
 		DamageCalculator()
