@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.45
+local version = 3.46
 --[GLOBALS]--
 local DFG = nil
 local ignite = nil
@@ -499,15 +499,6 @@ function OnWndMsg(Msg, Key)
 end
 function skinChanged()
 	return VeigarConfig.other.skin1 ~= lastSkin
-end
-
-function OnTowerFocus(tower, unit)
-	targt = unit
-	if GetDistance(player, targt) < (erange + eradius) then
-		if targt.type == myHero.type and VeigarConfig.ew.stuntt then
-		useStun(targt)
-		end
-	end
 end
 
 function OnProcessSpell(unit, spell)
