@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.46
+local version = 3.47
 --[GLOBALS]--
 local DFG = nil
 local ignite = nil
@@ -348,7 +348,7 @@ function OnLoad()
 	VeigarConfig:addTS(ts)
 	VeigarConfig:addSubMenu("["..myHero.charName.." - OrbWalking]", "OrbWalking")
 		NSOW:LoadToMenu(VeigarConfig.OrbWalking)
-	startsprite = GetWebSprite("http://puu.sh/be5pB/4f7556bc18.png")	
+	--startsprite = GetWebSprite("http://puu.sh/be5pB/4f7556bc18.png")	
 end
 --function _drawstartsprite()
    -- if startsprite and GetInGameTimer() >= 1 and GetInGameTimer() <= 20 then        
