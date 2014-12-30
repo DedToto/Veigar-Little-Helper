@@ -1,5 +1,5 @@
 if myHero.charName ~= "Veigar" then return end
-local version = 3.47
+local version = 3.48
 --[GLOBALS]--
 local DFG = nil
 local ignite = nil
@@ -320,8 +320,8 @@ function OnLoad()
 		VeigarConfig.LifeSaver:addParam("antign", "Auto Pots when ignited/morde R", SCRIPT_PARAM_ONOFF, true)
 	
 	VeigarConfig:addSubMenu("Other","other")
-		if VIP_USER then VeigarConfig.other:addParam("skin", "Use change skin", SCRIPT_PARAM_ONOFF, false) end
-		if VIP_USER then VeigarConfig.other:addParam("skin1", "Skin change(VIP)", SCRIPT_PARAM_SLICE, 5, 1, 8) end
+		if VIP_USER then VeigarConfig.other:addParam("skin", "Use change skin[CRASH RISK]", SCRIPT_PARAM_ONOFF, false) end
+		if VIP_USER then VeigarConfig.other:addParam("skin1", "Skin change(VIP)[CRASH RISK]", SCRIPT_PARAM_SLICE, 5, 1, 8) end
 		if VeigarConfig.other.skin and VIP_USER then
 		GenModelPacket("Veigar", VeigarConfig.other.skin1)
 		lastSkin = VeigarConfig.other.skin1
